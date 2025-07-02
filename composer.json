@@ -10,7 +10,8 @@
   ],
   "require": {
     "php": "^8.4",
-    "strucom/exception": "*"
+    "strucom/exception": "*",
+    "ext-pdo": "*"
   },
   "autoload": {
     "psr-4": {
