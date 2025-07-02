@@ -1,0 +1,20 @@
+{
+  "name": "strucom/tools",
+  "description": "General tools for PHP projects",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "Albrecht Fischer"
+    }
+  ],
+  "require": {
+    "php": "^8.4",
+    "strucom/exception": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "Strucom\\Tools\\": "src/"
+    }
+  }
+}
