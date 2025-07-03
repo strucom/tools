@@ -73,5 +73,133 @@ class PhpTools
         $current[$lastKey] = $value;
     }
 
+    /**
+     * Modifies a nested array by replacing subarrays containing a specific key ($leafKey)
+     * with the value of that key.
+     *
+     * @param array &$array   The array to modify. Passed by reference.
+     * @param string $leafKey The key to look for in subarrays.
+     *
+     * @since 7.0.0
+     * @author af
+     */
+    public static function pickArrayLeafs(array &$array, string $leafKey): void
+    {
+        foreach ($array as $key => &$value) {
+            if (is_array($value)) {
+                // If the subarray contains $leafKey, replace it with the value of $leafKey
+                if (array_key_exists($leafKey, $value)) {
+                    $array[$key] = $value[$leafKey];
+                } else {
+                    // Otherwise, recursively process the subarray
+                    self::pickArrayLeafs($value, $leafKey);
+                }
+            }
+        }
+    }
+
+    /**
+     * Creates a flat lookup array from a nested value array.
+     *
+     * For each set of keys in $keyList, a flat key is created by imploding the keys with $keySeparator.
+     * The value for the flat key is retrieved from $valueArray using the keys. If the value is not set,
+     * the $defaultValue is used.
+     *
+     * @param array $valueArray The nested array to retrieve values from.
+     * @param array $keyList A list of key arrays to look up in the $valueArray.
+     * @param string $keySeparator The separator used to create flat keys.
+     * @param mixed $defaultValue The default value to use if a key path is not found in $valueArray.
+     * @return array The resulting flat lookup array.
+     *
+     * @since 8.0.0
+     * @author af
+     */
+    public static function createFlatLookup(array $valueArray, array $keyList, string $keySeparator, mixed $defaultValue): array
+    {
+        $result = [];
+
+        foreach ($keyList as $keys) {
+            $flatKey = implode($keySeparator, $keys);
+
+            // Retrieve the value from the nested array using the keys
+            $value = $valueArray;
+            foreach ($keys as $key) {
+                if (is_array($value) && array_key_exists($key, $value)) {
+                    $value = $value[$key];
+                } else {
+                    // If the key path is not found, use the default value
+                    $value = $defaultValue;
+                    break;
+                }
+            }
+
+            $result[$flatKey] = $value;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Extracts the domain name from a given path based on common directory structures.
+     *
+     * This function checks for common hosting directory structures such as
+     * - Plesk: /var/www/vhosts/DOMAIN_NAME/...
+     * - Apache/Nginx: /var/www/DOMAIN_NAME/...
+     * - DirectAdmin: /home/USERNAME/domains/DOMAIN_NAME/...
+     *
+     * @param string $path The directory path to analyze.
+     * @return string|null The extracted domain name, or null if it cannot be determined.
+     *
+     * @since 7.0.0
+     * @author af
+     */
+    public static function getDomainFromPath(string $path): string|null
+    {
+        $pathParts = explode(DIRECTORY_SEPARATOR, $path);
+
+        // Check for Multi-Domain Hosting structure (Plesk)
+        if (in_array('vhosts', $pathParts)) {
+            $index = array_search('vhosts', $pathParts);
+            return $pathParts[$index + 1] ?? null;
+        }
+
+        // Check for Apache/Nginx structure
+        if (in_array('www', $pathParts)) {
+            $index = array_search('www', $pathParts);
+            return $pathParts[$index + 1] ?? null;
+        }
+
+        // Check for DirectAdmin structure
+        if (in_array('domains', $pathParts)) {
+            $index = array_search('domains', $pathParts);
+            return $pathParts[$index + 1] ?? null;
+        }
+
+        // Return null if no domain can be determined
+        return null;
+    }
+
+    /**
+     * Determines the domain name based on the execution context (CLI or HTTP).
+     *
+     * If the script is executed via CLI, it uses the `getDomainFromPath` function to extract
+     * the domain from the directory path. If the script is executed via HTTP, it retrieves
+     * the domain from the HTTP_HOST server variable.
+     *
+     * @return string|null The domain name, or null if it cannot be determined.
+     *
+     * @since 7.0.0
+     * @author af
+     */
+    public static function getDomain(): string|null
+    {
+        if (php_sapi_name() === 'cli') {
+            return self::getDomainFromPath(__DIR__);
+        } else {
+            // Script is called via HTTP
+            return $_SERVER['HTTP_HOST'] ?? null;
+        }
+    }
+
 
 }
