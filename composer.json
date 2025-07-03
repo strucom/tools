@@ -10,11 +10,11 @@
   ],
   "require": {
     "php": "^8.4",
-    "strucom/exception": "*",
+    "strucom/exception": "^0.0.2",
     "ext-pdo": "*"
   },
   "require-dev": {
-    "phpunit/phpunit": "*"
+    "phpunit/phpunit": "^12.2.5"
   },
   "autoload": {
     "psr-4": {
