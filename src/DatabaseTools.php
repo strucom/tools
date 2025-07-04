@@ -13,7 +13,7 @@ use Strucom\Exception\DatabaseException;
  */
 class DatabaseTools
 {
-    private const string VALID_SQL_NAME_PATTERN = '/^(`)?([a-zA-Z_][a-zA-Z0-9_]+)(`)?$/';
+    private const string VALID_SQL_NAME_PATTERN = '/^[a-zA-Z_][a-zA-Z0-9_]+$/';
 
     /**
      * Return a comma-separated SQL placeholder string with a `?` for each value. Optionally add brackets.
@@ -243,11 +243,14 @@ class DatabaseTools
         $components = explode('.', $name);
 
         foreach ($components as &$component) {
-            if (!preg_match(self::VALID_SQL_NAME_PATTERN, $component, $matches) || ($matches[1] !== $matches[3])) {
+            if (str_starts_with($component, '`') && str_ends_with($component, '`')) {
+                $component = trim($component, '`');
+            }
+            if (!preg_match(self::VALID_SQL_NAME_PATTERN, $component)) {
                 throw new DatabaseException(sprintf("Invalid SQL name component: '%s'.", $component));
             }
 
-            $component = '`' . $matches[2] . '`';
+            $component = '`' . $component . '`';
         }
 
         return implode('.', $components);
