@@ -38,6 +38,7 @@ class XmlTools
         'var', 'video',
         'wbr'
     ];
+    public const string XML_ATTRIBUTE_NAME_PATTERN = '/^[a-zA-Z_][\w.\-:]*$/';
 
     /**
      * Generates an XML element using DOMDocument and returns a DOMElement or a string.
@@ -74,11 +75,11 @@ class XmlTools
         }
 
         foreach ($attributes as $key => $value) {
-            $escapedValue = htmlspecialchars($value, ENT_QUOTES | ENT_XML1, 'UTF-8');
-
-            if (!$element->setAttribute($key, $escapedValue)) {
-                throw new DOMException(sprintf('Invalid attribute "%s" with value "%s"', $key, $escapedValue));
+            if (!preg_match(self::XML_ATTRIBUTE_NAME_PATTERN, $key)) {
+                throw new DOMException(sprintf('Invalid attribute "%s"', $key));
             }
+            $escapedValue = htmlspecialchars($value, ENT_QUOTES | ENT_XML1, 'UTF-8');
+            $element->setAttribute($key, $escapedValue);
         }
 
         $content = is_array($content) ? $content : [$content];

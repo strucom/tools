@@ -220,11 +220,8 @@ class PhpTools
         $words = preg_split(pattern: '/\s+/', subject: $input, flags: PREG_SPLIT_NO_EMPTY);
 
         if ($ignoreCase) {
-            $lowercaseWords = array_combine(
-                array_keys($words),
-                array_map(fn($word) => strtolower($word), $words)
-            );
-            $uniqueWords = array_intersect_key($words, array_unique($lowercaseWords));
+            $lowercaseWords =  array_map(fn($word) => strtolower($word), $words);
+            $uniqueWords =  array_unique(array_values($lowercaseWords));
         } else {
             $uniqueWords = array_unique($words);
         }
