@@ -217,15 +217,19 @@ class PhpTools
      */
     public static function tokenizeString(string $input, bool $ignoreCase = false, bool $asArray = false): string|array
     {
-        $words = preg_split('/\s+/', $input);
+        $words = preg_split(pattern: '/\s+/', subject: $input, flags: PREG_SPLIT_NO_EMPTY);
 
         if ($ignoreCase) {
-            $words = array_intersect_key($words, array_unique(array_map(fn($word) => strtolower($word), $words)));
+            $lowercaseWords = array_combine(
+                array_keys($words),
+                array_map(fn($word) => strtolower($word), $words)
+            );
+            $uniqueWords = array_intersect_key($words, array_unique($lowercaseWords));
         } else {
-            $words = array_unique($words);
+            $uniqueWords = array_unique($words);
         }
 
-        return $asArray ? $words : implode(' ', $words);
+        return $asArray ? $uniqueWords : implode(' ', $uniqueWords);
     }
     /**
      * Merges tokenized strings into unique tokens.

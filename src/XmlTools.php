@@ -13,7 +13,8 @@ class XmlTools
 {
     public const int WHITESPACE_KEEP = 0;
     public const int WHITESPACE_TRIM = 1;
-    public const int WHITESPACE_NORMALIZE = 2;
+    public const int WHITESPACE_REDUCE = 2;
+    public const int WHITESPACE_NORMALIZE = 3;
     public const array HTML_ELEMENTS = [
         'a', 'abbr', 'address', 'area', 'article', 'aside', 'audio',
         'b', 'base', 'bdi', 'bdo', 'blockquote', 'body', 'br', 'button',
@@ -49,7 +50,7 @@ class XmlTools
      * @param array                                  $attributes     An associative array of attributes for the XML element (key-value pairs).
      * @param bool                                   $asString       Whether to return the element as a string.
      * @param bool                                   $commentInEmpty Add an empty comment with a single space if content is empty.
-     * @param int                                    $whitespace     A bitmask for whitespace handling: WHITESPACE_NORMALIZE, WHITESPACE_TRIM, or WHITESPACE_KEEP.
+     * @param int                                    $whitespace     A bitmask for whitespace handling: WHITESPACE_REDUCE, WHITESPACE_TRIM, or WHITESPACE_KEEP.
      * @return DOMElement|string The generated XML element as a DOMElement or string.
      *
      * @throws DOMException If the content array contains invalid items.
@@ -66,11 +67,18 @@ class XmlTools
         int $whitespace = self::WHITESPACE_KEEP
     ): DOMElement|string {
         $dom = new DOMDocument('1.0', 'UTF-8');
-        $element = $dom->createElement($gi);
+        try {
+            $element = $dom->createElement($gi);
+        } catch (DOMException $exception) {
+            throw new DOMException(sprintf('Invalid generic identifier "%s": %s', $gi, $exception->getMessage()));
+        }
 
         foreach ($attributes as $key => $value) {
             $escapedValue = htmlspecialchars($value, ENT_QUOTES | ENT_XML1, 'UTF-8');
-            $element->setAttribute($key, $escapedValue);
+
+            if (!$element->setAttribute($key, $escapedValue)) {
+                throw new DOMException(sprintf('Invalid attribute "%s" with value "%s"', $key, $escapedValue));
+            }
         }
 
         $content = is_array($content) ? $content : [$content];
@@ -87,7 +95,7 @@ class XmlTools
                 if ($whitespace & self::WHITESPACE_TRIM) {
                     $item = trim($item);
                 }
-                if ($whitespace & self::WHITESPACE_NORMALIZE) {
+                if ($whitespace & self::WHITESPACE_REDUCE) {
                     $item = preg_replace('/\s+/', ' ', $item);
                 }
 
@@ -129,7 +137,7 @@ class XmlTools
      * @param array                        $attributes     Additional attributes for the element. Throws an exception if attributes conflict with other parameters.
      * @param bool                         $asString       Whether to return the element as a string instead of a DOMElement.
      * @param bool                         $commentInEmpty Whether to add an empty comment (`<!-- -->`) if the content is empty.
-     * @param int                          $whitespace     A bitmask for whitespace handling: WHITESPACE_NORMALIZE, WHITESPACE_TRIM, or WHITESPACE_KEEP.
+     * @param int                          $whitespace     A bitmask for whitespace handling: WHITESPACE_REDUCE, WHITESPACE_TRIM, or WHITESPACE_KEEP.
      *
      * @return DOMElement|string The generated HTML element as a DOMElement or a string.
      *

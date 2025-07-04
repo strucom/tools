@@ -51,7 +51,7 @@ class NumberTools
         while ($number > 0) {
             $remainder = $number % $base; // Get the remainder
             $result = $digits[$remainder] . $result; // Prepend the corresponding character
-            $number = intdiv($number, $base); // Divide the number by the base
+            $number = intdiv((int)$number, $base); // Divide the number by the base
         }
 
         return $sign . $result;

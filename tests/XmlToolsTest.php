@@ -52,6 +52,8 @@ class XmlToolsTest extends TestCase
     {
         $result = XmlTools::xml('div', "   Hello   World   ", [], false, false, XmlTools::WHITESPACE_NORMALIZE);
         self::assertEquals('Hello World', $result->textContent);
+        $result = XmlTools::xml('div', "   Hello   World   ", [], false, false, XmlTools::WHITESPACE_REDUCE);
+        self::assertEquals(' Hello World ', $result->textContent);
     }
 
     public function testWhitespaceTrimming(): void
@@ -95,6 +97,27 @@ class XmlToolsTest extends TestCase
         self::assertEquals('test-id', $result->getAttribute('id'));
         self::assertEquals('test-class', $result->getAttribute('class'));
         self::assertEquals('value', $result->getAttribute('data-test'));
+    }
+
+    public function testInvalidAttributeWithSpaces(): void
+    {
+        $this->expectException(DOMException::class);
+        $this->expectExceptionMessage('Invalid attribute');
+        XmlTools::xml('div', null, ['invalid attribute' => 'test-id']);
+    }
+
+    public function testInvalidAttributeWithSpecialCharacters(): void
+    {
+        $this->expectException(DOMException::class);
+        $this->expectExceptionMessage('Invalid attribute');
+        XmlTools::xml('div', null, ['$5' => 'test-class']);
+    }
+
+    public function testInvalidAttributeStartingWithNumber(): void
+    {
+        $this->expectException(DOMException::class);
+        $this->expectExceptionMessage('Invalid attribute');
+        XmlTools::xml('div', null, ['667' => 'value']);
     }
 
     public function testEmptyElementWithoutComment(): void
