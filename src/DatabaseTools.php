@@ -13,6 +13,8 @@ use Strucom\Exception\DatabaseException;
  */
 class DatabaseTools
 {
+    private const string VALID_SQL_NAME_PATTERN = '/^(`)?([a-zA-Z_][a-zA-Z0-9_]+)(`)?$/';
+
     /**
      * Return a comma-separated SQL placeholder string with a `?` for each value. Optionally add brackets.
      *
@@ -181,45 +183,74 @@ class DatabaseTools
      * @param string $tableName          The name of the table to query.
      * @param string $keyColumn          The column to use as the key in the resulting array.
      * @param string $valueColumn        The column to use as the value in the resulting array.
-     * @param bool   $throwDuplicateKeys Whether to throw an exception if duplicate keys are found. Otherwise, it will use the first occurrence of each key.
+     * @param bool   $throwDuplicateKeys Whether to throw an exception if duplicate keys are found. Otherwise, it will use the last occurrence of each key.
      * @return array The resulting key-value pair array.
      *
-     * @throws DatabaseException If the table or columns are not found, or if duplicate keys are found (when `$throwDuplicateKeys` is true).
+     * @throws PDOException If the query fails
+     * @throws DatabaseException If duplicate keys are found (when `$throwDuplicateKeys` is true).
      *
-     * @since 7.0.0
+     * @since 8.0.0
      * @author af
      */
     public static function getLookupArray(PDO $pdo, string $tableName, string $keyColumn, string $valueColumn, bool $throwDuplicateKeys = false): array
     {
-        try {
-            $stmt = $pdo->prepare(sprintf(
-                "SELECT %s, %s FROM %s",
-                $keyColumn,
-                $valueColumn,
-                $tableName
-            ));
-            $stmt->execute();
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = $pdo->prepare(
+            sprintf(
+                'SELECT %s, %s FROM %s',
+                self::validateAndEscapeSQL($keyColumn),
+                self::validateAndEscapeSQL($valueColumn),
+                self::validateAndEscapeSQL($tableName)
+            )
+        );
+        $stmt->execute();
 
-            $result = [];
-            foreach ($rows as $row) {
-                $key = $row[$keyColumn];
-                $value = $row[$valueColumn];
-
-                if (array_key_exists($key, $result)) {
-                    if ($throwDuplicateKeys) {
-                        throw new DatabaseException("Duplicate key found: $key in table $tableName");
-                    }
-                    // Skip duplicate keys if $throwDuplicateKeys is false
-                    continue;
-                }
-
-                $result[$key] = $value;
-            }
-            return $result;
-        } catch (PDOException $exception) {
-            throw new DatabaseException('Table or columns not found: ' . $exception->getMessage(), $exception->getCode(), $exception);
+        $result = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+        $rowCount = $stmt->rowCount();
+        if ((count($result) !== $rowCount) && $throwDuplicateKeys) {
+            throw new DatabaseException(sprintf('Duplicate value found for key column: %s in table %s', $keyColumn,$tableName));
         }
+        return $result;
+    }
+
+    /**
+     * Validates and escapes SQL table or column names.
+     *
+     * This function checks if the provided names are valid SQL identifiers. Names can include schemas (e.g., `schema.table`).
+     * It ensures that each component of the name is properly escaped with backticks unless already escaped.
+     * If a name is invalid, it throws a DatabaseException.
+     *
+     * @param string|array $name The name(s) to validate and sanitize. Can be a string or an array of strings.
+     * @return string|array The validated name(s)
+     * @throws DatabaseException If a name is not valid.
+     *
+     * @since PHP 8.0.0 (union types introduced)
+     * @author af
+     */
+    public static function validateAndEscapeSQL(string|array $name): string|array
+    {
+        if (is_array($name)) {
+            foreach ($name as &$item) {
+                if (!is_string($item)) {
+                    throw new DatabaseException(
+                        sprintf('All elements in the names array must be strings. Found: %s.', gettype($item))
+                    );
+                }
+                $item = self::validateAndEscapeSQL($item);
+            }
+            return $name;
+        }
+
+        $components = explode('.', $name);
+
+        foreach ($components as &$component) {
+            if (!preg_match(self::VALID_SQL_NAME_PATTERN, $component, $matches) || ($matches[1] !== $matches[3])) {
+                throw new DatabaseException(sprintf("Invalid SQL name component: '%s'.", $component));
+            }
+
+            $component = '`' . $matches[2] . '`';
+        }
+
+        return implode('.', $components);
     }
 
 

@@ -109,6 +109,35 @@ class XmlTools
 
         return $asString ? $dom->saveXML($element) : $element;
     }
+    /**
+     * Generates an HTML element using DOMDocument and returns a DOMElement or a string.
+     *
+     * This function allows you to create an HTML element with optional content, attributes, ARIA attributes, and other properties.
+     * It validates the generic identifier (tag name) and ensures proper handling of attributes like `id`, `class`, `data-*`, and ARIA attributes.
+     *
+     * @param string                       $gi             The generic identifier (tag name) of the HTML element. Defaults to 'div'.
+     * @param DOMElement|string|int|float|array|null $content         The content of the HTML element. If null, the element will be self-closing.
+     *                                                                If a DOMElement is provided, it will be appended as a child.
+     *                                                                If a string, int, or float is provided, it will be added as text content.
+     *                                                                If an array is provided, it can contain DOMElements, strings, ints, floats, or nulls, which will be appended in order.
+     * @param string|array|null            $class          The class or classes to add to the element. Can be a string or an array of strings.
+     * @param string|null                  $id             The ID of the element. Throws an exception if multiple IDs are defined.
+     * @param string|null                  $ariaLabel      The ARIA label for the element. Mutually exclusive with `aria-labelledby` and `aria-hidden`.
+     * @param string|null                  $ariaLabelledBy The ARIA labelledby attribute. Mutually exclusive with `aria-label` and `aria-hidden`.
+     * @param bool|null                    $ariaHidden     The ARIA hidden attribute. Mutually exclusive with `aria-label` and `aria-labelledby`.
+     * @param array                        $data           An associative array of `data-*` attributes to add to the element.
+     * @param array                        $attributes     Additional attributes for the element. Throws an exception if attributes conflict with other parameters.
+     * @param bool                         $asString       Whether to return the element as a string instead of a DOMElement.
+     * @param bool                         $commentInEmpty Whether to add an empty comment (`<!-- -->`) if the content is empty.
+     * @param int                          $whitespace     A bitmask for whitespace handling: WHITESPACE_NORMALIZE, WHITESPACE_TRIM, or WHITESPACE_KEEP.
+     *
+     * @return DOMElement|string The generated HTML element as a DOMElement or a string.
+     *
+     * @throws DOMException If the generic identifier is invalid, or if conflicting attributes are defined.
+     *
+     * @since PHP 8.0.0 (union types introduced)
+     * @author af
+     */
 
     public static function html(
         string $gi = 'div',
@@ -125,7 +154,7 @@ class XmlTools
         int $whitespace = self::WHITESPACE_KEEP,
     ): DOMElement|string {
         if (!in_array($gi, self::HTML_ELEMENTS)) {
-            throw new DOMException('Invalid HTML generic identifier: ' . $gi);
+            throw new DOMException(sprintf('Invalid HTML generic identifier: %s',  $gi));
         }
         if (!empty($id)) {
             if (!empty($attributes['id']) && $attributes['id'] !== $id) {
@@ -138,9 +167,10 @@ class XmlTools
         }
         foreach ($data as $dataKey => $dataValue) {
             if (isset($attributes['data-' . $dataKey])) {
-                throw new DOMException(
-                    'Multiple definitions for data attribute data-' . $dataKey . "\n" .
-                    'Use parameter $data instead of $attribute to define data attributes'
+                throw new DOMException(sprintf(
+                    'Multiple definitions for attribute "%s". Use parameter %s instead of $attribute',
+                    'data-' . $dataKey,
+                    '$data')
                 );
             } else {
                 $attributes['data-' . $dataKey] = $dataValue;
@@ -148,9 +178,10 @@ class XmlTools
         }
         if (!empty($ariaLabelledBy)) {
             if (isset($attributes['aria-labelledby'])) {
-                throw new DOMException(
-                    'Multiple definitions for data attribute "aria-labelledby"' . "\n" .
-                    'Use parameter $ariaLabelledBy instead of $attribute to define data aria attribute'
+                throw new DOMException(sprintf(
+                    'Multiple definitions for attribute "%s". Use parameter %s instead of $attribute',
+                    'aria-labelledby',
+                    '$ariaLabelledBy')
                 );
             }
             $attributes['aria-labelledby'] = $ariaLabelledBy;
@@ -158,23 +189,24 @@ class XmlTools
             unset($attributes['aria-hidden']);
         } elseif (!empty($ariaLabel)) {
             if (isset($attributes['aria-label'])) {
-                throw new DOMException(
-                    'Multiple definitions for data attribute "aria-label"' . "\n" .
-                    'Use parameter $ariaLabel instead of $attribute to define data aria attribute'
+                throw new DOMException(sprintf(
+                        'Multiple definitions for attribute "%s". Use parameter %s instead of $attribute',
+                        'aria-label',
+                        '$ariaLabel')
                 );
             }
             $attributes['aria-label'] = $ariaLabel;
             unset($attributes['aria-hidden']);
         } elseif (!empty($ariaHidden)) {
             if (isset($attributes['aria-hidden'])) {
-                throw new DOMException(
-                    'Multiple definitions for data attribute "aria-hidden"' . "\n" .
-                    'Use parameter $ariaHidden instead of $attribute to define data aria attribute'
+                throw new DOMException(sprintf(
+                    'Multiple definitions for attribute "%s". Use parameter %s instead of $attribute',
+                    'aria-hidden',
+                    '$ariaHidden')
                 );
             }
             $attributes['aria-hidden'] = 'true';
         }
-
 
         return self::xml(
             gi: $gi,
