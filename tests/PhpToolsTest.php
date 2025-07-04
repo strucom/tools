@@ -164,7 +164,10 @@ class PhpToolsTest extends TestCase
 
         // Test ignoring case and returning as array
         $result = PhpTools::tokenizeString('Hello world hello', true, true);
-        self::assertSame(['Hello', 'world'], $result);
+        self::assertSame(['hello', 'world'], $result);
+
+        $result = PhpTools::tokenizeString('Hello world hello', false, true);
+        self::assertSame(['Hello', 'world', 'hello'], $result);
 
         // Test with empty input
         $result = PhpTools::tokenizeString('');
