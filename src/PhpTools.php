@@ -2,6 +2,9 @@
 
 namespace Strucom\Tools;
 
+
+use InvalidArgumentException;
+
 /**
  * General PHP tools
  */
@@ -92,7 +95,7 @@ class PhpTools
                     $array[$key] = $value[$leafKey];
                 } else {
                     // Otherwise, recursively process the subarray
-                    self::pickArrayLeafs($value, $leafKey);
+                    self::pickArrayLeafs(array: $value, leafKey: $leafKey);
                 }
             }
         }
@@ -200,6 +203,68 @@ class PhpTools
             return $_SERVER['HTTP_HOST'] ?? null;
         }
     }
+    /**
+     * Normalize a string of tokens to return an array or a string of unique tokens separated by a single space.
+     *
+     * @param string $input The input string containing tokens.
+     * @param bool   $ignoreCase Ignore the case when filtering for unique tokens.
+     * @param bool   $asArray return tokens as an array
+     *
+     * @return string|array An array or a string of unique tokens separated by a single space.
+     *
+     * @since PHP 7.4.0
+     * @author af
+     */
+    public static function tokenizeString(string $input, bool $ignoreCase = false, bool $asArray = false): string|array
+    {
+        $words = preg_split('/\s+/', $input);
+
+        if ($ignoreCase) {
+            $words = array_intersect_key($words, array_unique(array_map(fn($word) => strtolower($word), $words)));
+        } else {
+            $words = array_unique($words);
+        }
+
+        return $asArray ? $words : implode(' ', $words);
+    }
+    /**
+     * Merges tokenized strings into unique tokens.
+     *
+     * This function accepts a variable number of arguments, each of which can be an array, a string, or null.
+     * It merges all the arguments into a single string, with each argument separated by a space.
+     * Duplicate tokens are removed, so the final result only contains unique tokens.
+     * If an argument is an array, each element is treated as a token.
+     * If an argument is a string, it is split into tokens by space.
+     * If an argument is null, it is ignored.
+     *
+     * @param bool $asArray If true, return an array. Otherwise, return a string.
+     * @param array|string|null ...$tokens The tokens to be merged.
+     * @return string|array The merged tokenized array or string with unique tokens.
+     *
+     * @throws InvalidArgumentException If an array contains non-scalar elements.
+     *
+     * @since PHP 8.4.0
+     * @author af
+     */
+    public static function mergeTokenizedString(bool $asArray, array|string|null ...$tokens): string|array
+    {
+        $allTokens = [];
+
+        foreach ($tokens as $token) {
+            if (is_array($token)) {
+                // Check if any element in the array is not scalar
+                if (array_any($token, fn($item) => !is_scalar($item))) {
+                    throw new InvalidArgumentException('All elements in the token array must be scalar values.');
+                }
+                $allTokens = array_merge($allTokens, $token);
+            } elseif (is_string($token) && trim($token) !== '') {
+                $allTokens = array_merge($allTokens, explode(' ', $token));
+            }
+        }
+
+        return self::tokenizeString(implode(' ', $allTokens), asArray: $asArray);
+    }
+
 
 
 }

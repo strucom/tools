@@ -6,6 +6,7 @@ namespace Strucom\Tools;
 use InvalidArgumentException;
 use PDO;
 use PDOException;
+use Strucom\Exception\DatabaseException;
 
 /**
  * Tools for handling SQL databases
@@ -44,6 +45,8 @@ class DatabaseTools
      *
      * @throws PDOException If the query fails.
      *
+     * @internal SQL
+     *
      * @since PHP 7.1
      * @author af
      */
@@ -75,6 +78,8 @@ class DatabaseTools
      * @return array The array of filtered table names in lowercase.
      *
      * @throws PDOException If the query fails.
+     *
+     * @internal SQL
      *
      * @since PHP 7.1
      * @author af
@@ -116,6 +121,8 @@ class DatabaseTools
      *
      * @throws PDOException If the query fails.
      * @throws InvalidArgumentException If the $tableNames array contains non-string values.
+     *
+     * @internal SQL
      *
      * @since PHP 7.1
      * @author af
@@ -167,5 +174,53 @@ class DatabaseTools
             $allColumnNames
         );
     }
+    /**
+     * Retrieves a key-value pair array from a database table.
+     *
+     * @param PDO    $pdo                The PDO instance for database interaction.
+     * @param string $tableName          The name of the table to query.
+     * @param string $keyColumn          The column to use as the key in the resulting array.
+     * @param string $valueColumn        The column to use as the value in the resulting array.
+     * @param bool   $throwDuplicateKeys Whether to throw an exception if duplicate keys are found. Otherwise, it will use the first occurrence of each key.
+     * @return array The resulting key-value pair array.
+     *
+     * @throws DatabaseException If the table or columns are not found, or if duplicate keys are found (when `$throwDuplicateKeys` is true).
+     *
+     * @since 7.0.0
+     * @author af
+     */
+    public static function getLookupArray(PDO $pdo, string $tableName, string $keyColumn, string $valueColumn, bool $throwDuplicateKeys = false): array
+    {
+        try {
+            $stmt = $pdo->prepare(sprintf(
+                "SELECT %s, %s FROM %s",
+                $keyColumn,
+                $valueColumn,
+                $tableName
+            ));
+            $stmt->execute();
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $result = [];
+            foreach ($rows as $row) {
+                $key = $row[$keyColumn];
+                $value = $row[$valueColumn];
+
+                if (array_key_exists($key, $result)) {
+                    if ($throwDuplicateKeys) {
+                        throw new DatabaseException("Duplicate key found: $key in table $tableName");
+                    }
+                    // Skip duplicate keys if $throwDuplicateKeys is false
+                    continue;
+                }
+
+                $result[$key] = $value;
+            }
+            return $result;
+        } catch (PDOException $exception) {
+            throw new DatabaseException('Table or columns not found: ' . $exception->getMessage(), $exception->getCode(), $exception);
+        }
+    }
+
 
 }
