@@ -56,7 +56,7 @@ class XmlTools
      *
      * @throws DOMException If the content array contains invalid items.
      *
-     * @since  PHP 8.0.0
+     * @since  PHP 8.0
      * @author af
      */
     public static function xml(
@@ -144,7 +144,7 @@ class XmlTools
      *
      * @throws DOMException If the generic identifier is invalid, or if conflicting attributes are defined.
      *
-     * @since PHP 8.0.0 (union types introduced)
+     * @since PHP 8.4
      * @author af
      */
 

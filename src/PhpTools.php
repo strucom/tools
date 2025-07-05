@@ -53,7 +53,7 @@ class PhpTools
      * @param array $keys An array of keys representing the path to the value.
      * @param mixed $value The value to set at the specified path.
      *
-     * @since 7.4.0
+     * @since PHP 7.4
      * @author af
      */
     public static function setNestedValue(array &$valueArray, array $keys, mixed $value): void
@@ -83,7 +83,7 @@ class PhpTools
      * @param array &$array   The array to modify. Passed by reference.
      * @param string $leafKey The key to look for in subarrays.
      *
-     * @since 7.0.0
+     * @since PHP 7.0
      * @author af
      */
     public static function pickArrayLeafs(array &$array, string $leafKey): void
@@ -100,7 +100,6 @@ class PhpTools
             }
         }
     }
-
     /**
      * Creates a flat lookup array from a nested value array.
      *
@@ -114,33 +113,46 @@ class PhpTools
      * @param mixed $defaultValue The default value to use if a key path is not found in $valueArray.
      * @return array The resulting flat lookup array.
      *
-     * @since 8.0.0
+     * @since PHP 8.0
      * @author af
      */
-    public static function createFlatLookup(array $valueArray, array $keyList, string $keySeparator, mixed $defaultValue): array
+    public static function createFlatLookup(array $valueArray, array $keyList, string $keySeparator, mixed $defaultValue = null): array
     {
         $result = [];
-
         foreach ($keyList as $keys) {
             $flatKey = implode($keySeparator, $keys);
-
-            // Retrieve the value from the nested array using the keys
-            $value = $valueArray;
-            foreach ($keys as $key) {
-                if (is_array($value) && array_key_exists($key, $value)) {
-                    $value = $value[$key];
-                } else {
-                    // If the key path is not found, use the default value
-                    $value = $defaultValue;
-                    break;
-                }
-            }
-
-            $result[$flatKey] = $value;
+            $result[$flatKey] = self::keyLookup($valueArray, $keys, $defaultValue);
         }
-
         return $result;
     }
+    /**
+     * Retrieves a value from a nested array using a list of keys.
+     *
+     * This function navigates through a nested array structure based on the provided keys
+     * and returns the value at the specified path. If the path does not exist, the default
+     * value is returned.
+     *
+     * @param array $valueArray The nested array to retrieve the value from.
+     * @param array $keys An array of keys representing the path to the value.
+     * @param mixed $defaultValue The default value to return if the key path is not found.
+     * @return mixed The value at the specified key path, or the default value if the path does not exist.
+     *
+     * @since PHP 8.0
+     * @author af
+     */
+    public static function keyLookup(array $valueArray, array $keys, mixed $defaultValue = null): mixed
+    {
+        $result = $valueArray;
+        foreach ($keys as $key) {
+            if (is_array($result) && array_key_exists($key, $result)) {
+                $result = $result[$key];
+            } else {
+                return $defaultValue;
+            }
+        }
+        return $result;
+    }
+
 
     /**
      * Extracts the domain name from a given path based on common directory structures.
@@ -153,7 +165,7 @@ class PhpTools
      * @param string $path The directory path to analyze.
      * @return string|null The extracted domain name, or null if it cannot be determined.
      *
-     * @since 7.0.0
+     * @since 7.0
      * @author af
      */
     public static function getDomainFromPath(string $path): string|null
@@ -191,7 +203,7 @@ class PhpTools
      *
      * @return string|null The domain name, or null if it cannot be determined.
      *
-     * @since 7.0.0
+     * @since 7.0
      * @author af
      */
     public static function getDomain(): string|null
@@ -212,7 +224,7 @@ class PhpTools
      *
      * @return string|array An array or a string of unique tokens separated by a single space.
      *
-     * @since PHP 7.4.0
+     * @since PHP 7.4
      * @author af
      */
     public static function tokenizeString(string $input, bool $ignoreCase = false, bool $asArray = false): string|array
@@ -265,7 +277,4 @@ class PhpTools
 
         return self::tokenizeString(implode(' ', $allTokens), asArray: $asArray);
     }
-
-
-
 }

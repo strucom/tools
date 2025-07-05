@@ -189,7 +189,7 @@ class DatabaseTools
      * @throws PDOException If the query fails
      * @throws DatabaseException If duplicate keys are found (when `$throwDuplicateKeys` is true).
      *
-     * @since 8.0.0
+     * @since PHP 8.0
      * @author af
      */
     public static function getLookupArray(PDO $pdo, string $tableName, string $keyColumn, string $valueColumn, bool $throwDuplicateKeys = false): array
@@ -223,7 +223,7 @@ class DatabaseTools
      * @return string|array The validated name(s)
      * @throws DatabaseException If a name is not valid.
      *
-     * @since PHP 8.0.0 (union types introduced)
+     * @since PHP 8.0
      * @author af
      */
     public static function validateAndEscapeSQL(string|array $name): string|array
