@@ -219,14 +219,14 @@ class DatabaseTools
      * It ensures that each component of the name is properly escaped with backticks unless already escaped.
      * If a name is invalid, it throws a DatabaseException.
      *
-     * @param string|array $name The name(s) to validate and sanitize. Can be a string or an array of strings.
-     * @return string|array The validated name(s)
+     * @param array|string $name The name(s) to validate and sanitize. Can be a string or an array of strings.
+     * @return array|string The validated name(s)
      * @throws DatabaseException If a name is not valid.
      *
      * @since PHP 8.0
      * @author af
      */
-    public static function validateAndEscapeSQL(string|array $name): string|array
+    public static function validateAndEscapeSQL(array|string $name): array|string
     {
         if (is_array($name)) {
             foreach ($name as &$item) {

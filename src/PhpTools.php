@@ -252,14 +252,14 @@ class PhpTools
      *
      * @param bool $asArray If true, return an array. Otherwise, return a string.
      * @param array|string|null ...$tokens The tokens to be merged.
-     * @return string|array The merged tokenized array or string with unique tokens.
+     * @return array|string The merged tokenized array or string with unique tokens.
      *
      * @throws InvalidArgumentException If an array contains non-scalar elements.
      *
      * @since PHP 8.4.0
      * @author af
      */
-    public static function mergeTokenizedString(bool $asArray, array|string|null ...$tokens): string|array
+    public static function mergeTokenizedString(bool $asArray, array|string|null ...$tokens): array|string
     {
         $allTokens = [];
 
