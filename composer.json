@@ -10,7 +10,7 @@
   ],
   "require": {
     "php": "^8.4",
-    "strucom/exception": "^0.0.2",
+    "strucom/exception": "^0.0.3",
     "ext-pdo": "*",
     "ext-dom": "*"
   },
