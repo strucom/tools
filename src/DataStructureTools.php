@@ -27,7 +27,7 @@ class DataStructureTools
      */
     public static function getArrayOrContainerValue(array|ContainerInterface $configData, string $key): mixed
     {
-        if (!self::hasArrayOrContainerValue($configData, $key)) {
+        if (!self::hasArrayOrContainerKey($configData, $key)) {
             throw new NotFoundException(sprintf('Missing entry in configData for %s', $key));
         }
         if (is_array($configData)) {
@@ -59,7 +59,7 @@ class DataStructureTools
      * @since PHP 8.0
      * @author af
      */
-    public static function hasArrayOrContainerValue(ContainerInterface|array $configData, string $key): bool
+    public static function hasArrayOrContainerKey(ContainerInterface|array $configData, string $key): bool
     {
         if (is_array($configData)) {
             return isset($configData[$key]);
