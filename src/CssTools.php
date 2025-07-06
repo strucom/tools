@@ -98,13 +98,16 @@ class CssTools
      *
      * @return string The generated CSS `@font-face` rule as a string.
      *
-     * @throws InvalidArgumentException If a font file name does not have an extension.
+     * @throws InvalidArgumentException If a font file name does not have an extension or $fontData[$filenameKey] amd $fontData['src'] are both empty
      *
      * @since PHP 8.0
      * @author af
      */
     public static function fontFace(array $fontData, string $filenameKey, string $path = '', bool $withSpace = false): string
     {
+        if (empty($fontData[$filenameKey]) && empty($fontData['src'])) {
+            throw new InvalidArgumentException(sprintf('$fontData["src"] and $fontData[%s] are both empty.', $filenameKey));
+        }
         $singleSpace = $withSpace ? ' ' : '';
         $indent = $withSpace ? self::INDENT : '';
         $newLine = $withSpace ? "\n" : '';
@@ -124,21 +127,18 @@ class CssTools
 
             switch ($fontDataKey) {
                 case 'font-family':
-                    if (!is_string($fontDataValue)) {
-                        throw new InvalidArgumentException(sprintf('%s value must be a string.', $fontDataKey));
-                    }
-                    $fontDataValue = trim($fontDataValue, '"\' ');
-                    if (!in_array($fontDataValue, self::CSS_KEYWORDS)) {
-                        $fontDataValue = '"' . $fontDataValue . '"';
-                    }
-                    $result[] = 'font-family:' . $singleSpace . $fontDataValue . ';';
+                    $result[] = self::fontFamily(key: $fontDataKey, value: $fontDataValue, singleSpace: $singleSpace);
                     break;
 
                 case $filenameKey:
                     if (!empty($fontData['src'])) {
                         break;
                     }
-                    $src = self::fontSrcFromFilenames($fontDataValue,$path, $newLineDoubleIndent,$singleSpace);
+                    $src = self::fontSrcFromFilenames(
+                        filenames: $fontDataValue,
+                        path: $path,
+                        newLineIndent: $newLineDoubleIndent,
+                        singleSpace: $singleSpace);
 
                     if (!empty($src)) {
                         $result[] = $src;
@@ -160,6 +160,35 @@ class CssTools
         $result .= $newLine . '}';
         return $result;
     }
+
+    /**
+     * Generates a CSS `font-family` declaration from the provided key and value.
+     *
+     * This function validates that the `$value` is a string, trims any surrounding quotes or whitespace,
+     * and ensures that the value is properly quoted unless it matches a predefined CSS keyword.
+     *
+     * @param string $key         The key associated with the font-family value (used for error messages).
+     * @param mixed  $value       The value to be used for the `font-family` declaration.
+     * @param string $singleSpace A string representing a single space for formatting the output.
+     *
+     * @return string The generated CSS `font-family` declaration.
+     *
+     * @throws InvalidArgumentException If the `$value` is not a string.
+     *
+     * @since PHP 8.0 (minimum version required for type declarations and named arguments)
+     * @author af
+     */
+    private static function fontFamily(string $key, mixed $value, string $singleSpace): string {
+        if (!is_string($value)) {
+            throw new InvalidArgumentException(sprintf('%s value must be a string.', $key));
+        }
+        $value = trim($value, '"\' ');
+        if (!in_array($value, self::CSS_KEYWORDS)) {
+            $value = '"' . $value . '"';
+        }
+        return 'font-family:' . $singleSpace . $value . ';';
+    }
+
 
     /**
      * Generates the `src` property for a CSS `@font-face` rule from font filenames.
