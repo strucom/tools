@@ -1,9 +1,12 @@
 <?php
+namespace Tests;
+use DOMElement;
+use DOMException;
 use PHPUnit\Framework\TestCase;
 use Strucom\Tools\HtmlTools;
 use Strucom\Tools\XmlTools;
 
-class HtmlToolsTest extends \PHPUnit\Framework\TestCase
+class HtmlToolsTest extends TestCase
 {
 
     public function testValidGenericIdentifier(): void

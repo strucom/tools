@@ -1,6 +1,9 @@
 <?php
+namespace Tests;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
+use stdClass;
 use Strucom\Tools\PhpTools;
 
 class PhpToolsTest extends TestCase

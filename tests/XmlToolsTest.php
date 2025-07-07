@@ -1,6 +1,11 @@
 <?php
+namespace Tests;
 
+use DOMDocument;
+use DOMElement;
+use DOMException;
 use PHPUnit\Framework\TestCase;
+use stdClass;
 use Strucom\Tools\XmlTools;
 
 class XmlToolsTest extends TestCase
