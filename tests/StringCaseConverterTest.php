@@ -1,4 +1,5 @@
 <?php
+
 namespace Tests;
 
 use PHPUnit\Framework\TestCase;
@@ -6,55 +7,105 @@ use Strucom\Tools\StringCaseConverter;
 
 class StringCaseConverterTest extends TestCase
 {
-    /**
-     * @dataProvider provideIsValidCaseTestCases
-     */
-    public function testIsValidCase(string $input, string $format, int $validateInput, bool $expected): void
+    public function testEmptyCaseAllow(): void
     {
-        $result = StringCaseConverter::isValidCase($input, $format, $validateInput);
-        self::assertSame($expected, $result);
+        $result = StringCaseConverter::isValidCase('', StringCaseConverter::ANY_CASE, StringCaseConverter::ALLOW_EMPTY);
+        self::assertTrue($result);
     }
 
-    public static function provideIsValidCaseTestCases(): array
+    public function testEmptyCaseDeny(): void
     {
-        return [
-            // Empty cases
-            ['', StringCaseConverter::ANY_CASE, StringCaseConverter::ALLOW_EMPTY, true],
-            ['', StringCaseConverter::ANY_CASE, StringCaseConverter::VALIDATE, false],
+        $result = StringCaseConverter::isValidCase('', StringCaseConverter::ANY_CASE, StringCaseConverter::VALIDATE);
+        self::assertFalse($result);
+    }
 
-            // Special characters
-            ['_', StringCaseConverter::ANY_CASE, StringCaseConverter::VALIDATE, true],
-            ['-', StringCaseConverter::ANY_CASE, StringCaseConverter::VALIDATE, true],
-            ['___', StringCaseConverter::SNAKE_CASE, StringCaseConverter::VALIDATE, true],
-            ['_--', StringCaseConverter::KEBAB_CASE, StringCaseConverter::VALIDATE, false],
+    public function testSpecialCharUnd(): void
+    {
+        $result = StringCaseConverter::isValidCase('_', StringCaseConverter::ANY_CASE, StringCaseConverter::VALIDATE);
+        self::assertTrue($result);
+    }
 
-            // Missing underscores in underscore-prefixed formats
-            ['camelCase', StringCaseConverter::UNDERSCORE_CAMEL_CASE, StringCaseConverter::VALIDATE, false],
-            ['_camelCase', StringCaseConverter::UNDERSCORE_CAMEL_CASE, StringCaseConverter::VALIDATE, true],
-            ['PascalCase', StringCaseConverter::UNDERSCORE_PASCAL_CASE, StringCaseConverter::VALIDATE, false],
-            ['_PascalCase', StringCaseConverter::UNDERSCORE_PASCAL_CASE, StringCaseConverter::VALIDATE, true],
+    public function testSpecialCharDash(): void
+    {
+        $result = StringCaseConverter::isValidCase('-', StringCaseConverter::ANY_CASE, StringCaseConverter::VALIDATE);
+        self::assertTrue($result);
+    }
 
-            // Digits and leading digits
-            ['0abc', StringCaseConverter::CAMEL_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::ACCEPT_DIGITS, true],
-            ['0abc', StringCaseConverter::CAMEL_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::NO_LEADING_DIGITS, false],
-            ['abc0', StringCaseConverter::CAMEL_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::NO_LEADING_DIGITS, true],
-            ['_0abc', StringCaseConverter::UNDERSCORE_CAMEL_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::ACCEPT_DIGITS, true],
-            ['_0abc', StringCaseConverter::UNDERSCORE_CAMEL_CASE, StringCaseConverter::VALIDATE, false],
+    public function testSnakeCaseValid(): void
+    {
+        $result = StringCaseConverter::isValidCase('___', StringCaseConverter::SNAKE_CASE, StringCaseConverter::VALIDATE);
+        self::assertTrue($result);
+    }
 
-            // CamelCase and PascalCase
-            ['camelCaseXXX', StringCaseConverter::CAMEL_CASE, StringCaseConverter::VALIDATE, true],
-            ['abcABCabc', StringCaseConverter::CAMEL_CASE, StringCaseConverter::VALIDATE, true],
-            ['CamelCase', StringCaseConverter::PASCAL_CASE, StringCaseConverter::VALIDATE, true],
-            ['camelCase', StringCaseConverter::PASCAL_CASE, StringCaseConverter::VALIDATE, false],
+    public function testKebabCaseInvalid(): void
+    {
+        $result = StringCaseConverter::isValidCase('_--', StringCaseConverter::KEBAB_CASE, StringCaseConverter::VALIDATE);
+        self::assertFalse($result);
+    }
 
-            // Snake case
-            ['ab__AB', StringCaseConverter::SNAKE_CASE, StringCaseConverter::VALIDATE, false],
-            ['ab__ab', StringCaseConverter::SNAKE_CASE, StringCaseConverter::VALIDATE, true],
+    public function testMissingUnderscore(): void
+    {
+        $result = StringCaseConverter::isValidCase('camelCase', StringCaseConverter::UNDERSCORE_CAMEL_CASE, StringCaseConverter::VALIDATE);
+        self::assertFalse($result);
+    }
 
-            // Kebab case
-            ['ab-ab-', StringCaseConverter::KEBAB_CASE, StringCaseConverter::VALIDATE, false],
-            ['ab-ab', StringCaseConverter::KEBAB_CASE, StringCaseConverter::VALIDATE, true],
-        ];
+    public function testWithUnderscore(): void
+    {
+        $result = StringCaseConverter::isValidCase('_camelCase', StringCaseConverter::UNDERSCORE_CAMEL_CASE, StringCaseConverter::VALIDATE);
+        self::assertTrue($result);
+    }
+
+    public function testDigitsAllowed(): void
+    {
+        $result = StringCaseConverter::isValidCase('0abc', StringCaseConverter::CAMEL_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::ACCEPT_DIGITS);
+        self::assertTrue($result);
+    }
+
+    public function testLeadingDigitsDeny(): void
+    {
+        $result = StringCaseConverter::isValidCase('0abc', StringCaseConverter::CAMEL_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::NO_LEADING_DIGITS);
+        self::assertFalse($result);
+    }
+
+    public function testCamelCaseValid(): void
+    {
+        $result = StringCaseConverter::isValidCase('camelCaseXXX', StringCaseConverter::CAMEL_CASE, StringCaseConverter::VALIDATE);
+        self::assertTrue($result);
+    }
+
+    public function testPascalCaseValid(): void
+    {
+        $result = StringCaseConverter::isValidCase('CamelCase', StringCaseConverter::PASCAL_CASE, StringCaseConverter::VALIDATE);
+        self::assertTrue($result);
+    }
+
+    public function testPascalCaseInvalid(): void
+    {
+        $result = StringCaseConverter::isValidCase('camelCase', StringCaseConverter::PASCAL_CASE, StringCaseConverter::VALIDATE);
+        self::assertFalse($result);
+    }
+
+    public function testSnakeCaseInvalid(): void
+    {
+        $result = StringCaseConverter::isValidCase('ab__AB', StringCaseConverter::SNAKE_CASE, StringCaseConverter::VALIDATE);
+        self::assertFalse($result);
+    }
+
+    public function testSnakeCaseValid2(): void
+    {
+        $result = StringCaseConverter::isValidCase('ab__ab', StringCaseConverter::SNAKE_CASE, StringCaseConverter::VALIDATE);
+        self::assertTrue($result);
+    }
+
+    public function testKebabCaseValid(): void
+    {
+        $result = StringCaseConverter::isValidCase('ab-ab', StringCaseConverter::KEBAB_CASE, StringCaseConverter::VALIDATE);
+        self::assertTrue($result);
+    }
+
+    public function testKebabCaseInvalid2(): void
+    {
+        $result = StringCaseConverter::isValidCase('ab-ab-', StringCaseConverter::KEBAB_CASE, StringCaseConverter::VALIDATE);
+        self::assertFalse($result);
     }
 }
-
