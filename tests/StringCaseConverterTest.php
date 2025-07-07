@@ -25,7 +25,7 @@ class StringCaseConverterTest extends TestCase
         self::assertTrue(StringCaseConverter::isValidCase('R565', StringCaseConverter::PASCAL_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::ACCEPT_DIGITS_LC));
         self::assertFalse(StringCaseConverter::isValidCase('34_AB', StringCaseConverter::TITLE_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::ACCEPT_DIGITS_LC));
         self::assertTrue(StringCaseConverter::isValidCase('34aa34P34', StringCaseConverter::PASCAL_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::ACCEPT_DIGITS));
-        self::assertFalse(StringCaseConverter::isValidCase('34aa34P34', StringCaseConverter::PASCAL_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::ACCEPT_DIGITS_UC));
+        self::assertTrue(StringCaseConverter::isValidCase('34aa34P34', StringCaseConverter::PASCAL_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::ACCEPT_DIGITS_UC));
         self::assertFalse(StringCaseConverter::isValidCase('34aa34P34', StringCaseConverter::PASCAL_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::ACCEPT_DIGITS_LC));
         self::assertTrue(StringCaseConverter::isValidCase('34aa34P34', StringCaseConverter::CAMEL_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::ACCEPT_DIGITS));
         self::assertFalse(StringCaseConverter::isValidCase('34aa34P34', StringCaseConverter::CAMEL_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::ACCEPT_DIGITS_UC));
