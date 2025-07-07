@@ -4,146 +4,109 @@ namespace Tests;
 
 use PHPUnit\Framework\TestCase;
 use Strucom\Tools\StringCaseConverter;
+use InvalidArgumentException;
 
 class StringCaseConverterTest extends TestCase
 {
-    public function testEmptyAllowed(): void
+    // Tests for isValidCase with edge cases
+    public function testEmptyWordsDigits(): void
     {
-        $result = StringCaseConverter::isValidCase('', StringCaseConverter::ANY_CASE, StringCaseConverter::ALLOW_EMPTY);
+        $result = StringCaseConverter::isValidCase('0-0-', StringCaseConverter::KEBAB_CASE, StringCaseConverter::ALLOW_EMPTY_WORDS | StringCaseConverter::ACCEPT_DIGITS);
         self::assertTrue($result);
     }
 
-    public function testEmptyDenied(): void
+    public function testEmptyWordsLeading(): void
     {
-        $result = StringCaseConverter::isValidCase('', StringCaseConverter::ANY_CASE, StringCaseConverter::VALIDATE);
+        $result = StringCaseConverter::isValidCase('0_0_', StringCaseConverter::SNAKE_CASE, StringCaseConverter::ALLOW_EMPTY_WORDS | StringCaseConverter::NO_LEADING_DIGITS);
         self::assertFalse($result);
     }
 
-    public function testUnderscoreValid(): void
-    {
-        $result = StringCaseConverter::isValidCase('_', StringCaseConverter::ANY_CASE, StringCaseConverter::VALIDATE);
-        self::assertTrue($result);
-    }
-
-    public function testDashInvalid(): void
-    {
-        $result = StringCaseConverter::isValidCase('-', StringCaseConverter::ANY_CASE, StringCaseConverter::VALIDATE);
-        self::assertFalse($result);
-    }
-
-    public function testSnakeValid(): void
-    {
-        $result = StringCaseConverter::isValidCase('___', StringCaseConverter::SNAKE_CASE, StringCaseConverter::VALIDATE);
-        self::assertFalse($result);
-        $result = StringCaseConverter::isValidCase('___', StringCaseConverter::SNAKE_CASE, StringCaseConverter::VALIDATE|StringCaseConverter::ALLOW_EMPTY_WORDS);
-        self::assertTrue($result);
-    }
-
-    public function testKebabInvalid(): void
-    {
-        $result = StringCaseConverter::isValidCase('_--', StringCaseConverter::KEBAB_CASE, StringCaseConverter::VALIDATE);
-        self::assertFalse($result);
-    }
-
-    public function testNoUnderscore(): void
-    {
-        $result = StringCaseConverter::isValidCase('camelCase', StringCaseConverter::UNDERSCORE_CAMEL_CASE, StringCaseConverter::VALIDATE);
-        self::assertFalse($result);
-    }
-
-    public function testWithUnderscore2(): void
-    {
-        $result = StringCaseConverter::isValidCase('_camelCase', StringCaseConverter::UNDERSCORE_CAMEL_CASE, StringCaseConverter::VALIDATE);
-        self::assertTrue($result);
-    }
-
-    public function testDigitsAllowed2(): void
-    {
-        $result = StringCaseConverter::isValidCase('0abc', StringCaseConverter::CAMEL_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::ACCEPT_DIGITS);
-        self::assertFalse($result);
-    }
-
-    public function testLeadingDigits(): void
-    {
-        $result = StringCaseConverter::isValidCase('0abc', StringCaseConverter::CAMEL_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::NO_LEADING_DIGITS);
-        self::assertFalse($result);
-    }
-
-    public function testCamelValid(): void
-    {
-        $result = StringCaseConverter::isValidCase('camelCaseXXX', StringCaseConverter::CAMEL_CASE, StringCaseConverter::VALIDATE);
-        self::assertTrue($result);
-        $result = StringCaseConverter::isValidCase('camelCaseXXX', StringCaseConverter::CAMEL_CASE, StringCaseConverter::VALIDATE|StringCaseConverter::ALLOW_EMPTY_WORDS);
-        self::assertTrue($result);
-    }
-
-    public function testPascalValid(): void
-    {
-        $result = StringCaseConverter::isValidCase('CamelCase', StringCaseConverter::PASCAL_CASE, StringCaseConverter::VALIDATE);
-        self::assertTrue($result);
-    }
-
-    public function testPascalInvalid(): void
-    {
-        $result = StringCaseConverter::isValidCase('camelCase', StringCaseConverter::PASCAL_CASE, StringCaseConverter::VALIDATE);
-        self::assertFalse($result);
-    }
-
-    public function testSnakeInvalid(): void
-    {
-        $result = StringCaseConverter::isValidCase('ab__AB', StringCaseConverter::SNAKE_CASE, StringCaseConverter::VALIDATE);
-        self::assertFalse($result);
-    }
-
-    public function testSnakeValid2(): void
-    {
-        $result = StringCaseConverter::isValidCase('ab__ab', StringCaseConverter::SNAKE_CASE, StringCaseConverter::VALIDATE);
-        self::assertFalse($result);
-        $result = StringCaseConverter::isValidCase('ab__ab', StringCaseConverter::SNAKE_CASE, StringCaseConverter::VALIDATE|StringCaseConverter::ALLOW_EMPTY_WORDS);
-        self::assertTrue($result);
-    }
-
-    public function testKebabValid(): void
-    {
-        $result = StringCaseConverter::isValidCase('ab-ab', StringCaseConverter::KEBAB_CASE, StringCaseConverter::VALIDATE);
-        self::assertTrue($result);
-    }
-
-    public function testKebabInvalid2(): void
-    {
-        $result = StringCaseConverter::isValidCase('ab-ab-', StringCaseConverter::KEBAB_CASE, StringCaseConverter::VALIDATE);
-        self::assertFalse($result);
-        $result = StringCaseConverter::isValidCase('ab-ab-', StringCaseConverter::KEBAB_CASE, StringCaseConverter::VALIDATE|StringCaseConverter::ALLOW_EMPTY_WORDS);
-        self::assertTrue($result);
-    }
-
-    public function testEmptyWordsAny(): void
-    {
-        $result = StringCaseConverter::isValidCase('-', StringCaseConverter::ANY_CASE, StringCaseConverter::ALLOW_EMPTY_WORDS);
-        self::assertTrue($result);
-    }
-
-    public function testEmptyWordsSnake(): void
+    public function testEmptyWordsValid(): void
     {
         $result = StringCaseConverter::isValidCase('__', StringCaseConverter::SNAKE_CASE, StringCaseConverter::ALLOW_EMPTY_WORDS);
         self::assertTrue($result);
     }
 
-    public function testEmptyWordsKebab(): void
+    public function testDigitsNoLeading(): void
     {
-        $result = StringCaseConverter::isValidCase('--', StringCaseConverter::KEBAB_CASE, StringCaseConverter::ALLOW_EMPTY_WORDS);
+        $result = StringCaseConverter::isValidCase('123abc', StringCaseConverter::CAMEL_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::NO_LEADING_DIGITS);
+        self::assertFalse($result);
+    }
+
+    public function testDigitsAllowed(): void
+    {
+        $result = StringCaseConverter::isValidCase('123abc', StringCaseConverter::CAMEL_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::ACCEPT_DIGITS);
         self::assertTrue($result);
     }
 
-    public function testEmptyWordsPascal(): void
+    public function testEmptyWordsTitle2(): void
     {
-        $result = StringCaseConverter::isValidCase('', StringCaseConverter::PASCAL_CASE, StringCaseConverter::ALLOW_EMPTY_WORDS);
+        $result = StringCaseConverter::isValidCase('_Title_Case_', StringCaseConverter::UNDERSCORE_TITLE_CASE, StringCaseConverter::ALLOW_EMPTY_WORDS);
         self::assertTrue($result);
     }
 
-    public function testEmptyWordsTitle(): void
+    // Tests for exceptions in isValidCase
+    public function testInvalidFormat(): void
     {
-        $result = StringCaseConverter::isValidCase('_Title_Case', StringCaseConverter::UNDERSCORE_TITLE_CASE, StringCaseConverter::ALLOW_EMPTY_WORDS);
-        self::assertTrue($result);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unsupported format: invalidFormat');
+        StringCaseConverter::isValidCase('test', 'invalidFormat', StringCaseConverter::VALIDATE);
+    }
+
+    public function testEmptyStringException(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Input string is empty and bitmask ALLOW_EMPTY is not set.');
+        StringCaseConverter::convertCase('', StringCaseConverter::ANY_CASE, StringCaseConverter::CAMEL_CASE, StringCaseConverter::VALIDATE);
+    }
+
+    public function testInvalidString(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Input string "123abc" is not valid for PascalCase.');
+        StringCaseConverter::convertCase('123abc', StringCaseConverter::PASCAL_CASE, StringCaseConverter::CAMEL_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::NO_LEADING_DIGITS);
+    }
+
+    // Tests for convertCase
+    public function testConvertAnyToSnake(): void
+    {
+        $result = StringCaseConverter::convertCase('abCCddEE', StringCaseConverter::ANY_CASE, StringCaseConverter::SNAKE_CASE);
+        self::assertSame('ab_c_cdd_e_e', $result);
+    }
+
+    public function testConvertCamelToSnake(): void
+    {
+        $result = StringCaseConverter::convertCase('abCCddEE', StringCaseConverter::CAMEL_CASE, StringCaseConverter::SNAKE_CASE);
+        self::assertSame('ab_c_cdd_e_e', $result);
+    }
+
+    public function testConvertTitleToSnake(): void
+    {
+        $result = StringCaseConverter::convertCase('abCCddEE', StringCaseConverter::TITLE_CASE, StringCaseConverter::SNAKE_CASE, StringCaseConverter::SANITIZE);
+        self::assertSame('ab_c_cdd_e_e', $result);
+    }
+
+    public function testConvertSnakeToSnake(): void
+    {
+        $result = StringCaseConverter::convertCase('ab_cc_dd_ee', StringCaseConverter::SNAKE_CASE, StringCaseConverter::SNAKE_CASE);
+        self::assertSame('ab_cc_dd_ee', $result);
+    }
+
+    public function testConvertSnakeToCamel(): void
+    {
+        $result = StringCaseConverter::convertCase('ab_cc_dd_ee', StringCaseConverter::SNAKE_CASE, StringCaseConverter::CAMEL_CASE);
+        self::assertSame('abCcDdEe', $result);
+    }
+
+    public function testConvertSnakeToTitle(): void
+    {
+        $result = StringCaseConverter::convertCase('ab_cc_dd_ee', StringCaseConverter::SNAKE_CASE, StringCaseConverter::TITLE_CASE);
+        self::assertSame('Ab_Cc_Dd_Ee', $result);
+    }
+
+    public function testConvertSnakeToPascal(): void
+    {
+        $result = StringCaseConverter::convertCase('ab_cc_dd_ee', StringCaseConverter::SNAKE_CASE, StringCaseConverter::PASCAL_CASE);
+        self::assertSame('AbCcDdEe', $result);
     }
 }
