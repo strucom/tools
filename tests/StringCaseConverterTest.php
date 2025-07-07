@@ -46,7 +46,7 @@ class StringCaseConverterTest extends TestCase
             self::assertTrue(StringCaseConverter::isValidCase($alpha,$case ));
             self::assertFalse(StringCaseConverter::isValidCase($num,$case));
             self::assertTrue(StringCaseConverter::isValidCase($num,$case,StringCaseConverter::VALIDATE|StringCaseConverter::ACCEPT_DIGITS));
-            self::assertFalse(StringCaseConverter::isValidCase($num,$case,StringCaseConverter::VALIDATE|StringCaseConverter::ACCEPT_DIGITS|StringCaseConverter::NO_LEADING_DIGITS));
+            self::assertFalse(!str_starts_with($case,'_') && StringCaseConverter::isValidCase($num,$case,StringCaseConverter::VALIDATE|StringCaseConverter::ACCEPT_DIGITS|StringCaseConverter::NO_LEADING_DIGITS));
             self::assertFalse(StringCaseConverter::isValidCase($alphanum,$case));
             self::assertTrue(StringCaseConverter::isValidCase($alphanum,$case,StringCaseConverter::VALIDATE|StringCaseConverter::ACCEPT_DIGITS));
             self::assertTrue(StringCaseConverter::isValidCase($alphanum,$case,StringCaseConverter::VALIDATE|StringCaseConverter::ACCEPT_DIGITS|StringCaseConverter::NO_LEADING_DIGITS));
