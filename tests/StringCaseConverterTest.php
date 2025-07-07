@@ -60,7 +60,7 @@ class StringCaseConverterTest extends TestCase
     public function testDigitsAllowed2(): void
     {
         $result = StringCaseConverter::isValidCase('0abc', StringCaseConverter::CAMEL_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::ACCEPT_DIGITS);
-        self::assertTrue($result);
+        self::assertFalse($result);
     }
 
     public function testLeadingDigits(): void
@@ -72,7 +72,7 @@ class StringCaseConverterTest extends TestCase
     public function testCamelValid(): void
     {
         $result = StringCaseConverter::isValidCase('camelCaseXXX', StringCaseConverter::CAMEL_CASE, StringCaseConverter::VALIDATE);
-        self::assertFalse($result);
+        self::assertTrue($result);
         $result = StringCaseConverter::isValidCase('camelCaseXXX', StringCaseConverter::CAMEL_CASE, StringCaseConverter::VALIDATE|StringCaseConverter::ALLOW_EMPTY_WORDS);
         self::assertTrue($result);
     }
@@ -98,6 +98,8 @@ class StringCaseConverterTest extends TestCase
     public function testSnakeValid2(): void
     {
         $result = StringCaseConverter::isValidCase('ab__ab', StringCaseConverter::SNAKE_CASE, StringCaseConverter::VALIDATE);
+        self::assertFalse($result);
+        $result = StringCaseConverter::isValidCase('ab__ab', StringCaseConverter::SNAKE_CASE, StringCaseConverter::VALIDATE|StringCaseConverter::ALLOW_EMPTY_WORDS);
         self::assertTrue($result);
     }
 
