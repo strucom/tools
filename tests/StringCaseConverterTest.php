@@ -8,11 +8,51 @@ use InvalidArgumentException;
 
 class StringCaseConverterTest extends TestCase
 {
+    private const array CASES = [
+    StringCaseConverter::CAMEL_CASE,
+    StringCaseConverter::PASCAL_CASE,
+    StringCaseConverter::SNAKE_CASE,
+    StringCaseConverter::TITLE_CASE,
+    StringCaseConverter::SCREAMING_SNAKE_CASE,
+    StringCaseConverter::KEBAB_CASE,
+    StringCaseConverter::TRAIN_CASE,
+    StringCaseConverter::SCREAMING_KEBAB_CASE,
+
+    StringCaseConverter::UNDERSCORE_CAMEL_CASE,
+    StringCaseConverter::UNDERSCORE_PASCAL_CASE,
+    StringCaseConverter::UNDERSCORE_SNAKE_CASE,
+    StringCaseConverter::UNDERSCORE_TITLE_CASE,
+    StringCaseConverter::UNDERSCORE_SCREAMING_SNAKE_CASE,
+    StringCaseConverter::UNDERSCORE_KEBAB_CASE,
+    StringCaseConverter::UNDERSCORE_TRAIN_CASE,
+    StringCaseConverter::UNDERSCORE_SCREAMING_KEBAB_CASE,
+    ];
+    private const array ALPHA = ['a', 'bc', 'def', 'ghij', 'kl', 'm'];
+    private const array NUM = ['1', '23', '456'];
+    private const array ALPHANUM = ['a1', 'bc23', 'def456'];
+    private const array SONDER = ['ä', 'ÄÖß', '$%/',''];
+
     /**
      * Tests for isValidCase with various edge cases, including ACCEPT_DIGITS_UC, ACCEPT_DIGITS_LC.
      */
     public function testIsValidCase(): void
     {
+        foreach (self::CASES as $case) {
+
+            $alpha = StringCaseConverter::convertWordsToFormat(self::ALPHA, $case);
+            $num = StringCaseConverter::convertWordsToFormat(self::NUM,$case);
+            $alphanum = StringCaseConverter::convertWordsToFormat(self::ALPHANUM,$case);
+            $sonder = StringCaseConverter::convertWordsToFormat(self::SONDER,$case);
+            self::assertTrue(StringCaseConverter::isValidCase($alpha,$case ));
+            self::assertFalse(StringCaseConverter::isValidCase($alpha,$num));
+            self::assertTrue(StringCaseConverter::isValidCase($alpha,$num),StringCaseConverter::VALIDATE|StringCaseConverter::ACCEPT_DIGITS);
+            self::assertFalse(StringCaseConverter::isValidCase($alpha,$num),StringCaseConverter::VALIDATE|StringCaseConverter::ACCEPT_DIGITS|StringCaseConverter::NO_LEADING_DIGITS);
+            self::assertFalse(StringCaseConverter::isValidCase($alpha,$alphanum ));
+            self::assertTrue(StringCaseConverter::isValidCase($alpha,$alphanum ),StringCaseConverter::VALIDATE|StringCaseConverter::ACCEPT_DIGITS);
+            self::assertTrue(StringCaseConverter::isValidCase($alpha,$alphanum ),StringCaseConverter::VALIDATE|StringCaseConverter::ACCEPT_DIGITS|StringCaseConverter::NO_LEADING_DIGITS);
+            self::assertTrue(StringCaseConverter::isValidCase($alpha,$sonder),StringCaseConverter::DO_NOT_VALIDATE);
+            self::assertSame(self::ALPHA, explode('_',StringCaseConverter::convertCase($alpha, $case,StringCaseConverter::SNAKE_CASE)));
+        }
         // ACCEPT_DIGITS_UC
         self::assertFalse(StringCaseConverter::isValidCase('0abC', StringCaseConverter::CAMEL_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::ACCEPT_DIGITS_UC));
         self::assertTrue(StringCaseConverter::isValidCase('9a565', StringCaseConverter::PASCAL_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::ACCEPT_DIGITS_UC));

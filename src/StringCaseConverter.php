@@ -19,11 +19,14 @@ class StringCaseConverter
 {
     // Case format constants
     public const string CAMEL_CASE = 'camelCase';
-    public const string SNAKE_CASE = 'snake_case';
-    public const string KEBAB_CASE = 'kebab-case';
     public const string PASCAL_CASE = 'PascalCase';
-    public const string SCREAMING_SNAKE_CASE = 'SCREAMING_SNAKE_CASE';
+    public const string SNAKE_CASE = 'snake_case';
     public const string TITLE_CASE = 'Title_Case';
+    public const string SCREAMING_SNAKE_CASE = 'SCREAMING_SNAKE_CASE';
+    public const string KEBAB_CASE = 'kebab-case';
+    public const string TRAIN_CASE = 'Train-Case';
+    public const string SCREAMING_KEBAB_CASE = 'SCREAMING-KEBAB-CASE';
+
     public const string ANY_CASE = 'any';
 
     // Underscore-prefixed constants
@@ -33,6 +36,8 @@ class StringCaseConverter
     public const string UNDERSCORE_PASCAL_CASE = '_PascalCase';
     public const string UNDERSCORE_SCREAMING_SNAKE_CASE = '_SCREAMING_SNAKE_CASE';
     public const string UNDERSCORE_TITLE_CASE = '_Title_Case';
+    public const string UNDERSCORE_TRAIN_CASE = '_Train-Case';
+    public const string UNDERSCORE_SCREAMING_KEBAB_CASE = '_SCREAMING-KEBAB-CASE';
 
 // Validation constants (bitmask)
     public const int DO_NOT_VALIDATE   = 0b00000000; // 0
@@ -116,6 +121,39 @@ class StringCaseConverter
     }
 
     /**
+     * Converts an array of words to the desired format.
+     *
+     * @param array $words The array of words.
+     * @param string $format The desired output format.
+     * @return string The formatted string.
+     *
+     * @throws InvalidArgumentException If an unsupported output format is provided.
+     * @since PHP 7.0
+     * @author af
+     */
+    public static function convertWordsToFormat(array $words, string $format): string
+    {
+        return match ($format) {
+            self::CAMEL_CASE => lcfirst(implode('', array_map(fn($word) => ucfirst(strtolower($word)), $words))),
+            self::PASCAL_CASE => implode('', array_map(fn($word) => ucfirst(strtolower($word)), $words)),
+            self::SNAKE_CASE => implode('_', array_map(fn($word) => strtolower($word), $words)),
+            self::TITLE_CASE => implode('_', array_map(fn($word) => ucfirst(strtolower($word)), $words)),
+            self::SCREAMING_SNAKE_CASE => strtoupper(implode('_', $words)),
+            self::KEBAB_CASE => implode('-', array_map(fn($word) => strtolower($word), $words)),
+            self::TRAIN_CASE => implode('-', array_map(fn($word) => ucfirst(strtolower($word)), $words)),
+            self::SCREAMING_KEBAB_CASE => strtoupper(implode('-', $words)),
+            self::UNDERSCORE_CAMEL_CASE => '_' . lcfirst(implode('', array_map(fn($word) => ucfirst(strtolower($word)), $words))),
+            self::UNDERSCORE_PASCAL_CASE => '_' . implode('', array_map(fn($word) => ucfirst(strtolower($word)), $words)),
+            self::UNDERSCORE_SNAKE_CASE => '_' . implode('_', array_map(fn($word) => strtolower($word), $words)),
+            self::UNDERSCORE_TITLE_CASE => '_' . implode('_', array_map(fn($word) => ucfirst(strtolower($word)), $words)),
+            self::UNDERSCORE_SCREAMING_SNAKE_CASE => '_' . strtoupper(implode('_', $words)),
+            self::UNDERSCORE_KEBAB_CASE => '_' . implode('-', array_map(fn($word) => strtolower($word), $words)),
+            self::UNDERSCORE_TRAIN_CASE => '_' . implode('-', array_map(fn($word) => ucfirst(strtolower($word)), $words)),
+            self::UNDERSCORE_SCREAMING_KEBAB_CASE => '_' . strtoupper(implode('-', $words)),
+            default => throw new InvalidArgumentException(sprintf('Unsupported format: %s', $format)),
+        };
+    }
+    /**
      * Validates the string format when ALLOW_EMPTY_WORDS is set.
      *
      * @param string $string The input string.
@@ -130,20 +168,41 @@ class StringCaseConverter
      */
     private static function validateWithEmptyWords(string $string, string $format, string $lower, string $upper): bool
     {
+        if (strlen($string) === 0) {
+            return true;
+        }
+        if (in_array($format, [
+        self::UNDERSCORE_CAMEL_CASE,
+        self::UNDERSCORE_PASCAL_CASE,
+        self::UNDERSCORE_SNAKE_CASE,
+        self::UNDERSCORE_TITLE_CASE,
+        self::UNDERSCORE_SCREAMING_SNAKE_CASE,
+        self::UNDERSCORE_KEBAB_CASE,
+        self::UNDERSCORE_TRAIN_CASE,
+        self::UNDERSCORE_SCREAMING_KEBAB_CASE])) {
+        if (!str_starts_with($string, '_')) {
+            return false;
+        }
+        $string = substr($string, 1);
+    }
         return match ($format) {
-            self::ANY_CASE => preg_match("/^[$lower$upper\-]*$/", $string) === 1,
-            self::CAMEL_CASE => preg_match("/^[$lower]*([$upper][$lower]*)*$/", $string) === 1,
-            self::SNAKE_CASE => preg_match("/^[$lower]*$/", $string) === 1,
-            self::KEBAB_CASE => preg_match("/^[\-$lower]*$/", $string) === 1,
-            self::PASCAL_CASE => preg_match("/^[$upper]?[$lower$upper]*$/", $string) === 1,
-            self::SCREAMING_SNAKE_CASE => preg_match("/^[_$upper]*$/", $string) === 1,
+            self::ANY_CASE => preg_match("/^[_\-$lower$upper]*$/", $string) === 1,
+            self::UNDERSCORE_CAMEL_CASE,
+            self::CAMEL_CASE => preg_match("/^([$lower][$lower$upper]*)?$/", $string) === 1,
+            self::UNDERSCORE_PASCAL_CASE,
+            self::PASCAL_CASE => preg_match("/^[$upper][$lower$upper]*$/", $string) === 1,
+            self::UNDERSCORE_SNAKE_CASE,
+            self::SNAKE_CASE => preg_match("/^[_$lower]*$/", $string) === 1,
+            self::UNDERSCORE_TITLE_CASE,
             self::TITLE_CASE => preg_match("/^([$upper][$lower]*)?(_[$upper][$lower]*)*$/", $string) === 1,
-            self::UNDERSCORE_CAMEL_CASE => preg_match("/^_([$lower]*([$upper][$lower]*)*)?$/", $string) === 1,
-            self::UNDERSCORE_SNAKE_CASE => preg_match("/^_[_$lower]*$/", $string) === 1,
-            self::UNDERSCORE_KEBAB_CASE => preg_match("/^_[\-$upper]*$/", $string) === 1,
-            self::UNDERSCORE_PASCAL_CASE => preg_match("/^_([$upper][$upper$lower]*)?$/", $string) === 1,
-            self::UNDERSCORE_SCREAMING_SNAKE_CASE => preg_match("/^_[_$upper]*$/", $string) === 1,
-            self::UNDERSCORE_TITLE_CASE => preg_match("/^_([$upper][$lower]*)?(_([$upper][$lower]*)?)*$/", $string) === 1,
+            self::UNDERSCORE_SCREAMING_SNAKE_CASE,
+            self::SCREAMING_SNAKE_CASE => preg_match("/^[_$upper]*$/", $string) === 1,
+            self::UNDERSCORE_KEBAB_CASE,
+            self::KEBAB_CASE => preg_match("/^[\-$lower]*$/", $string) === 1,
+            self::UNDERSCORE_TRAIN_CASE,
+            self::TRAIN_CASE => preg_match("/^([$upper][$lower]*)?(-[$upper][$lower]*)*$/", $string) === 1,
+            self::UNDERSCORE_SCREAMING_KEBAB_CASE,
+            self::SCREAMING_KEBAB_CASE => preg_match("/^[\-$upper]*$/", $string) === 1,
             default => throw new InvalidArgumentException(sprintf('Unsupported format: %s', $format)),
         };
     }
@@ -163,20 +222,38 @@ class StringCaseConverter
      */
     private static function validateWithWords(string $string, string $format, string $lower, string $upper): bool
     {
+        if (in_array($format, [
+            self::UNDERSCORE_CAMEL_CASE,
+            self::UNDERSCORE_PASCAL_CASE,
+            self::UNDERSCORE_SNAKE_CASE,
+            self::UNDERSCORE_TITLE_CASE,
+            self::UNDERSCORE_SCREAMING_SNAKE_CASE,
+            self::UNDERSCORE_KEBAB_CASE,
+            self::UNDERSCORE_TRAIN_CASE,
+            self::UNDERSCORE_SCREAMING_KEBAB_CASE])) {
+            if (!str_starts_with($string, '_')) {
+                return false;
+            }
+            $string = substr($string, 1);
+        }
         return match ($format) {
-            self::ANY_CASE => preg_match("/^[_$lower$upper][_$lower$upper\-]*$/", $string) === 1,
-            self::CAMEL_CASE => preg_match("/^[$lower]+([$upper][$lower]*)*$/", $string) === 1,
+            self::ANY_CASE => preg_match("/^[$lower$upper]+([_\-]?[$lower$upper]+)*$/", $string) === 1,
+            self::UNDERSCORE_CAMEL_CASE,
+            self::CAMEL_CASE => preg_match("/^[$lower][$lower$upper]*$/", $string) === 1,
+            self::UNDERSCORE_PASCAL_CASE,
+            self::PASCAL_CASE => preg_match("/^[$upper][$lower$upper]*$/", $string) === 1,
+            self::UNDERSCORE_SNAKE_CASE,
             self::SNAKE_CASE => preg_match("/^[$lower]+(_[$lower]+)*$/", $string) === 1,
-            self::KEBAB_CASE => preg_match("/^[$lower]+(-[$lower]+)*$/", $string) === 1,
-            self::PASCAL_CASE => preg_match("/^[$upper][$lower]*([$upper][$lower]*)*$/", $string) === 1,
-            self::SCREAMING_SNAKE_CASE => preg_match("/^[$upper]+(_[$upper]+)*$/", $string) === 1,
+            self::UNDERSCORE_TITLE_CASE,
             self::TITLE_CASE => preg_match("/^[$upper][$lower]*(_[$upper][$lower]*)*$/", $string) === 1,
-            self::UNDERSCORE_CAMEL_CASE => preg_match("/^_[$lower]+([$upper][$lower]*)*$/", $string) === 1,
-            self::UNDERSCORE_SNAKE_CASE => preg_match("/^_[$lower]+(_[$lower]+)*$/", $string) === 1,
-            self::UNDERSCORE_KEBAB_CASE => preg_match("/^_[$lower]+(-[$lower]+)*$/", $string) === 1,
-            self::UNDERSCORE_PASCAL_CASE => preg_match("/^_[$upper][$lower]*([$upper][$lower]*)*$/", $string) === 1,
-            self::UNDERSCORE_SCREAMING_SNAKE_CASE => preg_match("/^_[$upper]+(_[$upper]+)*$/", $string) === 1,
-            self::UNDERSCORE_TITLE_CASE => preg_match("/^_[$upper][$lower]*(_[$upper][$lower]*)*$/", $string) === 1,
+            self::UNDERSCORE_SCREAMING_SNAKE_CASE,
+            self::SCREAMING_SNAKE_CASE => preg_match("/^[$upper]+(_[$upper]+)*$/", $string) === 1,
+            self::UNDERSCORE_KEBAB_CASE,
+            self::KEBAB_CASE => preg_match("/^[$lower]+(-[$lower]+)*$/", $string) === 1,
+            self::UNDERSCORE_TRAIN_CASE,
+            self::TRAIN_CASE => preg_match("/^[$upper][$lower]*(-[$upper][$lower]*)*$/", $string) === 1,
+            self::UNDERSCORE_SCREAMING_KEBAB_CASE,
+            self::SCREAMING_KEBAB_CASE => preg_match("/^[$upper]+(-[$upper]+)*$/", $string) === 1,
             default => throw new InvalidArgumentException(sprintf('Unsupported format: %s', $format)),
         };
     }
@@ -208,26 +285,57 @@ class StringCaseConverter
         if ($validate & self::NO_LEADING_DIGITS) {
             $string = ltrim($string, '0123456789');
         }
+        if (in_array($format, [
+            self::UNDERSCORE_CAMEL_CASE,
+            self::UNDERSCORE_PASCAL_CASE,
+            self::UNDERSCORE_SNAKE_CASE,
+            self::UNDERSCORE_TITLE_CASE,
+            self::UNDERSCORE_SCREAMING_SNAKE_CASE,
+            self::UNDERSCORE_KEBAB_CASE,
+            self::UNDERSCORE_TRAIN_CASE,
+            self::UNDERSCORE_SCREAMING_KEBAB_CASE])) {
+            if (str_starts_with($string, '_')) {
+                $string = substr($string, 1);
+            }
+        }
 
         // Sanitize the string based on the format
-        $sanitized = match ($format) {
-            self::ANY_CASE => preg_replace("/[^_$lower$upper\-]/", '', $string),
-            self::CAMEL_CASE => preg_replace("/[^$lower$upper]/", '', $string),
-            self::UNDERSCORE_CAMEL_CASE => '_' . preg_replace("/[^$lower$upper]/", '', $string),
-            self::SNAKE_CASE, self::UNDERSCORE_SNAKE_CASE => preg_replace("/[^_$lower]/", '', strtolower($string)),
-            self::KEBAB_CASE => preg_replace("/[^-$lower]/", '', strtolower($string)),
-            self::UNDERSCORE_KEBAB_CASE => '_' . preg_replace("/[^-$lower]/", '', strtolower($string)),
-            self::PASCAL_CASE => preg_replace("/[^$lower$upper]/", '', ucfirst($string)),
-            self::UNDERSCORE_PASCAL_CASE => '_' . preg_replace("/[^$lower$upper]/", '', ucfirst($string)),
-            self::SCREAMING_SNAKE_CASE, self::UNDERSCORE_SCREAMING_SNAKE_CASE => preg_replace("/[^_$upper]/", '', strtoupper($string)),
-            self::TITLE_CASE, self::UNDERSCORE_TITLE_CASE => preg_replace("/[^_$lower$upper]/", '', $string),
+        $separator = match ($format) {
+            self::ANY_CASE => '\-_',
+            self::UNDERSCORE_CAMEL_CASE,
+            self::CAMEL_CASE,
+            self::UNDERSCORE_PASCAL_CASE,
+            self::PASCAL_CASE => '',
+            self::UNDERSCORE_SNAKE_CASE,
+            self::SNAKE_CASE,
+            self::UNDERSCORE_TITLE_CASE,
+            self::TITLE_CASE,
+            self::UNDERSCORE_SCREAMING_SNAKE_CASE,
+            self::SCREAMING_SNAKE_CASE => '_',
+            self::UNDERSCORE_KEBAB_CASE,
+            self::KEBAB_CASE,
+            self::UNDERSCORE_TRAIN_CASE,
+            self::TRAIN_CASE,
+            self::UNDERSCORE_SCREAMING_KEBAB_CASE,
+            self::SCREAMING_KEBAB_CASE => '\-',
             default => throw new InvalidArgumentException(sprintf('Unsupported format: %s', $format)),
         };
+        $sanitized = preg_replace("/[^$separator$lower$upper]/", '', $string);
+        if (in_array($format, [
+            self::UNDERSCORE_CAMEL_CASE,
+            self::UNDERSCORE_PASCAL_CASE,
+            self::UNDERSCORE_SNAKE_CASE,
+            self::UNDERSCORE_TITLE_CASE,
+            self::UNDERSCORE_SCREAMING_SNAKE_CASE,
+            self::UNDERSCORE_KEBAB_CASE,
+            self::UNDERSCORE_TRAIN_CASE,
+            self::UNDERSCORE_SCREAMING_KEBAB_CASE])) {
+            $sanitized = '_' . $sanitized;
+
+        }
         if (!($validate & self::ALLOW_EMPTY_WORDS)) {
             $sanitized = rtrim($sanitized, '_-');
         }
-
-        // Remove trailing underscores
         return $sanitized;
     }
 
@@ -256,47 +364,18 @@ class StringCaseConverter
             ),
             self::CAMEL_CASE, self::PASCAL_CASE =>
             array_map(fn($item) => strtolower($item), preg_split("/(?=[$upper])/", lcfirst($string))),
-            self::SNAKE_CASE, self::SCREAMING_SNAKE_CASE, self::TITLE_CASE =>
+            self::SNAKE_CASE, self::TITLE_CASE, self::SCREAMING_SNAKE_CASE =>
             explode('_', strtolower($string)),
-            self::KEBAB_CASE =>
+            self::KEBAB_CASE,self::TRAIN_CASE, self::SCREAMING_KEBAB_CASE, =>
             explode('-', strtolower($string)),
             self::UNDERSCORE_CAMEL_CASE, self::UNDERSCORE_PASCAL_CASE =>
             array_map(fn($item) => strtolower($item), preg_split("/(?=[$upper])/", lcfirst(ltrim($string, '_')))),
-            self::UNDERSCORE_SNAKE_CASE, self::UNDERSCORE_SCREAMING_SNAKE_CASE, self::UNDERSCORE_TITLE_CASE =>
+            self::UNDERSCORE_SNAKE_CASE, self::UNDERSCORE_TITLE_CASE, self::UNDERSCORE_SCREAMING_SNAKE_CASE =>
             explode('_', strtolower(ltrim($string, '_'))),
-            self::UNDERSCORE_KEBAB_CASE =>
+            self::UNDERSCORE_KEBAB_CASE, self::UNDERSCORE_TRAIN_CASE, self::UNDERSCORE_SCREAMING_KEBAB_CASE =>
             explode('-', strtolower(ltrim($string, '_'))),
             default => throw new InvalidArgumentException(sprintf('Unsupported format: %s', $format)),
         };
     }
 
-    /**
-     * Converts an array of words to the desired format.
-     *
-     * @param array $words The array of words.
-     * @param string $format The desired output format.
-     * @return string The formatted string.
-     *
-     * @throws InvalidArgumentException If an unsupported output format is provided.
-     * @since PHP 7.0
-     * @author af
-     */
-    private static function convertWordsToFormat(array $words, string $format): string
-    {
-        return match ($format) {
-            self::CAMEL_CASE => lcfirst(implode('', array_map(fn($word) => ucfirst(strtolower($word)), $words))),
-            self::PASCAL_CASE => implode('', array_map(fn($word) => ucfirst(strtolower($word)), $words)),
-            self::SNAKE_CASE => implode('_', array_map(fn($word) => strtolower($word), $words)),
-            self::KEBAB_CASE => implode('-', array_map(fn($word) => strtolower($word), $words)),
-            self::SCREAMING_SNAKE_CASE => strtoupper(implode('_', $words)),
-            self::TITLE_CASE => implode('_', array_map(fn($word) => ucfirst(strtolower($word)), $words)),
-            self::UNDERSCORE_CAMEL_CASE => '_' . lcfirst(implode('', array_map(fn($word) => ucfirst(strtolower($word)), $words))),
-            self::UNDERSCORE_PASCAL_CASE => '_' . implode('', array_map(fn($word) => ucfirst(strtolower($word)), $words)),
-            self::UNDERSCORE_SNAKE_CASE => '_' . implode('_', array_map(fn($word) => strtolower($word), $words)),
-            self::UNDERSCORE_KEBAB_CASE => '_' . implode('-', array_map(fn($word) => strtolower($word), $words)),
-            self::UNDERSCORE_SCREAMING_SNAKE_CASE => '_' . strtoupper(implode('_', $words)),
-            self::UNDERSCORE_TITLE_CASE => '_' . implode('_', array_map(fn($word) => ucfirst(strtolower($word)), $words)),
-            default => throw new InvalidArgumentException(sprintf('Unsupported format: %s', $format)),
-        };
-    }
 }
