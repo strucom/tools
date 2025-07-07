@@ -351,7 +351,7 @@ private const string INDENT = '  ';
             if ((is_string($fontDataValue) && empty($fontDataValue)) || is_null($fontDataValue)) {
                 continue;
             }
-            if ($fontDataKey === $filenameKey) {
+            if (($fontDataKey === $filenameKey) && (strtolower($fontDataKey) !== 'src')) {
                 $fontDataValue = self::fontSrcFromFilenames(
                     filenames: $fontDataValue,
                     path: $path,

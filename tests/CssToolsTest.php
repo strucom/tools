@@ -51,8 +51,23 @@ class CssToolsTest extends TestCase
             '  src: url("myfont.woff2") format("woff2");' . "\n" .
             '  font-weight: bold;' . "\n" .
             '}';
+        $result = CssTools::fontFace($fontData, 'abc', '', true);
+        self::assertSame($expected, $result);
+
         $result = CssTools::fontFace($fontData, 'src', '', true);
         self::assertSame($expected, $result);
+        $fontData = [
+            'fontFamily' => 'MyFont',
+            'files' => ['myfont.woff2'],
+            'fontWeight' => 'bold',
+        ];
+        $expected2 = '@font-face {' . "\n" .
+            '  font-family: "MyFont";' . "\n" .
+            '  src: url("myfont.woff2") format("woff2");' . "\n" .
+            '  font-weight: bold;' . "\n" .
+            '}';
+        $result = CssTools::fontFace($fontData, 'files', '', true);
+        self::assertSame($expected2, $result);
 
         // Test with missing src
         $this->expectException(InvalidArgumentException::class);
