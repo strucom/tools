@@ -44,13 +44,13 @@ class StringCaseConverterTest extends TestCase
             $alphanum = StringCaseConverter::convertWordsToFormat(self::ALPHANUM,$case);
             $sonder = StringCaseConverter::convertWordsToFormat(self::SONDER,$case);
             self::assertTrue(StringCaseConverter::isValidCase($alpha,$case ));
-            self::assertFalse(StringCaseConverter::isValidCase($alpha,$num));
-            self::assertTrue(StringCaseConverter::isValidCase($alpha,$num),StringCaseConverter::VALIDATE|StringCaseConverter::ACCEPT_DIGITS);
-            self::assertFalse(StringCaseConverter::isValidCase($alpha,$num),StringCaseConverter::VALIDATE|StringCaseConverter::ACCEPT_DIGITS|StringCaseConverter::NO_LEADING_DIGITS);
-            self::assertFalse(StringCaseConverter::isValidCase($alpha,$alphanum ));
-            self::assertTrue(StringCaseConverter::isValidCase($alpha,$alphanum ),StringCaseConverter::VALIDATE|StringCaseConverter::ACCEPT_DIGITS);
-            self::assertTrue(StringCaseConverter::isValidCase($alpha,$alphanum ),StringCaseConverter::VALIDATE|StringCaseConverter::ACCEPT_DIGITS|StringCaseConverter::NO_LEADING_DIGITS);
-            self::assertTrue(StringCaseConverter::isValidCase($alpha,$sonder),StringCaseConverter::DO_NOT_VALIDATE);
+            self::assertFalse(StringCaseConverter::isValidCase($num,$case));
+            self::assertTrue(StringCaseConverter::isValidCase($num,$case),StringCaseConverter::VALIDATE|StringCaseConverter::ACCEPT_DIGITS);
+            self::assertFalse(StringCaseConverter::isValidCase($num,$case),StringCaseConverter::VALIDATE|StringCaseConverter::ACCEPT_DIGITS|StringCaseConverter::NO_LEADING_DIGITS);
+            self::assertFalse(StringCaseConverter::isValidCase($alphanum,$case ));
+            self::assertTrue(StringCaseConverter::isValidCase($alphanum,$case ),StringCaseConverter::VALIDATE|StringCaseConverter::ACCEPT_DIGITS);
+            self::assertTrue(StringCaseConverter::isValidCase($alphanum,$case ),StringCaseConverter::VALIDATE|StringCaseConverter::ACCEPT_DIGITS|StringCaseConverter::NO_LEADING_DIGITS);
+            self::assertTrue(StringCaseConverter::isValidCase($sonder,$case),StringCaseConverter::DO_NOT_VALIDATE);
             self::assertSame(self::ALPHA, explode('_',StringCaseConverter::convertCase($alpha, $case,StringCaseConverter::SNAKE_CASE)));
         }
         // ACCEPT_DIGITS_UC
