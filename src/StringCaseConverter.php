@@ -59,15 +59,15 @@ class StringCaseConverter
      */
     public static function convertCase(string $string, string $inFormat = self::ANY_CASE, string $outFormat = self::CAMEL_CASE, int $validateInput = self::SANITIZE): string
     {
-        if (!self::isValidCase($string, $inFormat, $validateInput)) {
+        if (!self::isValidCase(string: $string, format: $inFormat, validateInput: $validateInput)) {
             if ($string === '') {
                 throw new InvalidArgumentException('Input string is empty and bitmask ALLOW_EMPTY is not set.');
             }
             throw new InvalidArgumentException(sprintf('Input string "%s" is not valid for %s.', $string, $inFormat));
         }
-        $string = self::sanitizeCase($string, $inFormat, $validateInput);
-        $words = self::normalizeToWords($string, $inFormat);
-        return self::convertWordsToFormat($words, $outFormat);
+        $string = self::sanitizeCase(string: $string, format: $inFormat, validateInput: $validateInput);
+        $words = self::normalizeToWords(string: $string, format: $inFormat);
+        return self::convertWordsToFormat(words: $words, format: $outFormat);
     }
 
 

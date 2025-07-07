@@ -277,4 +277,19 @@ class PhpTools
 
         return self::tokenizeString(string: implode(' ', $allTokens), asArray: $asArray);
     }
+    /**
+     * Sorts an array by the order of its keys in another array.
+     *
+     * @param array $array The array to be sorted (passed by reference).
+     * @param array $keyOrder The array defining the desired key order.
+     *
+     * @since PHP 8.0
+     * @author af
+     */
+    public static function sortArrayByKeyOrder(array &$array, array $keyOrder): void
+    {
+        $keyPositions = array_flip(array_keys($keyOrder));
+        uksort($array, fn($key1, $key2) => ($keyPositions[$key1] ?? PHP_INT_MAX) <=> ($keyPositions[$key2] ?? PHP_INT_MAX));
+    }
+
 }
