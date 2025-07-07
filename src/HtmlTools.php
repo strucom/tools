@@ -4,6 +4,8 @@ namespace Strucom\Tools;
 use DOMElement;
 use DOMException;
 use InvalidArgumentException;
+use Throwable;
+
 /**
  * Tools for handling HTML
  */
@@ -86,7 +88,7 @@ class HtmlTools
             $attributes['id'] = $id;
         }
         if (!empty($class)) {
-            $attributes['class'] = PhpTools::mergeTokenizedString(false, $class, $attributes['class'] ?? null);
+            $attributes['class'] = PhpTools::mergeTokenizedString( false, $class, $attributes['class'] ?? null);
         }
         foreach ($data as $dataKey => $dataValue) {
             if (isset($attributes['data-' . $dataKey])) {
@@ -147,23 +149,32 @@ class HtmlTools
      * If the filename does not contain `.css`, an `InvalidArgumentException` is thrown.
      *
      * @param string $filename The filename of the CSS file to include.
-     * @param bool   $asString Whether to return the element as a string (true) or as a DOMElement (false).
+     * @param bool   $asString Whether to return the element as a string (true) or as a DOMElement|null (false).
+     * @param int $errorMode The error handling mode (ERROR_MODE_IGNORE, ERROR_MODE_WARNING, or ERROR_MODE_EXCEPTION).
      *
-     * @return DOMElement|string The generated `<link>` element as a DOMElement or string.
+     * @return DOMElement|string|null The generated `<link>` element as a DOMElement or string. On error returns null or ''.
      *
      * @throws InvalidArgumentException If the filename does not contain `.css`.
      * @throws DOMException
+     * @throws Throwable (only one of the above exceptions will be thrown as Throwable)
      *
      * @since  PHP 8.0
      * @author af
      */
-    public static function cssHeaderLink(string $filename, bool $asString = false): DOMElement|string
+    public static function cssHeaderLink(
+        string $filename,
+        bool $asString = false,
+        int $errorMode = ErrorTools::ERROR_MODE_EXCEPTION
+    ): DOMElement|string|null
     {
         if (!str_contains($filename, '.css')) {
-            throw new InvalidArgumentException(sprintf('Missing ".css" in filename: %s', $filename));
+            return ErrorTools::exceptionSwitch(
+                exception: new InvalidArgumentException(sprintf('Missing ".css" in filename: %s', $filename)),
+                errorMode: $errorMode,
+                default: $asString ? '' : null);
         }
         return XmlTools::xml(
-            'link',
+            gi: 'link',
             attributes: ['rel' => 'stylesheet', 'type' => 'text/css', 'href' => $filename],
             asString: $asString
         );
@@ -176,23 +187,32 @@ class HtmlTools
      * If the filename does not contain `.js`, an `InvalidArgumentException` is thrown.
      *
      * @param string $filename  The filename of the JavaScript file to include.
-     * @param bool   $asString  Whether to return the element as a string (true) or as a DOMElement (false).
+     * @param bool   $asString  Whether to return the element as a string (true) or as a DOMElement|null (false).
+     * @param int $errorMode The error handling mode (ERROR_MODE_IGNORE, ERROR_MODE_WARNING, or ERROR_MODE_EXCEPTION).
      *
-     * @return DOMElement|string The generated `<script>` element as a DOMElement or string.
+     * @return DOMElement|string|null The generated `<script>` element as a DOMElement or string. On error returns null or ''.
      *
      * @throws InvalidArgumentException If the filename does not contain `.js`.
      * @throws DOMException
+     * @throws Throwable (only one of the above exceptions will be thrown as Throwable)
      *
      * @since PHP 8.0
      * @author af
      */
-    public static function jsHeaderLink(string $filename, bool $asString = false): DOMElement|string
+    public static function jsHeaderLink(
+        string $filename,
+        bool $asString = false,
+        int $errorMode = ErrorTools::ERROR_MODE_EXCEPTION
+    ): DOMElement|string|null
     {
         if (!str_contains($filename, '.js')) {
-            throw new InvalidArgumentException(sprintf('Missing ".js" in filename: %s', $filename));
+            return ErrorTools::exceptionSwitch(
+                exception: new InvalidArgumentException(sprintf('Missing ".js" in filename: %s', $filename)),
+                errorMode: $errorMode,
+                default: $asString ? '' : null);
         }
         return XmlTools::xml(
-            'script',
+            gi: 'script',
             attributes: ['src' => $filename],
             asString: $asString,
             commentInEmpty: true

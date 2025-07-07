@@ -15,7 +15,7 @@ class DataStructureTools
     /**
      * Retrieves a value from an array or a PSR-11 ContainerInterface.
      *
-     * @param array|ContainerInterface $configData The configuration data, either as an array or a container.
+     * @param ContainerInterface|array $configData The configuration data, either as an array or a container.
      * @param string                   $key        The key to retrieve from the configuration data.
      *
      * @return mixed The value associated with the key.
@@ -25,9 +25,9 @@ class DataStructureTools
      * @since PHP 8.0
      * @author af
      */
-    public static function getArrayOrContainerValue(array|ContainerInterface $configData, string $key): mixed
+    public static function getArrayOrContainerValue(ContainerInterface|array $configData, string $key): mixed
     {
-        if (!self::hasArrayOrContainerKey($configData, $key)) {
+        if (!self::hasArrayOrContainerKey(configData: $configData, key: $key)) {
             throw new NotFoundException(sprintf('Missing entry in configData for %s', $key));
         }
         if (is_array($configData)) {

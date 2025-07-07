@@ -82,7 +82,236 @@ class CssTools
         'break-word',
         'break-all'
     ];
-    private const string INDENT = '  ';
+
+    public const FONTFACE_DESCRIPTORS = [
+        'font-family',          // Specifies the name of the font family
+        'src',                  // Specifies the location of the font file(s)
+        'font-style',           // Specifies the style of the font (e.g., normal, italic, oblique)
+        'font-weight',          // Specifies the weight (thickness) of the font
+        'font-stretch',         // Specifies how condensed or expanded the font is
+        'font-display',         // Specifies how the font is displayed while loading
+        'unicode-range',        // Specifies the range of Unicode code points to use from the font
+        'font-feature-settings',// Allows control over advanced typographic features in OpenType fonts
+        'font-variation-settings', // Allows control over variable fonts by specifying axis names and values
+        'ascent-override',      // Overrides the ascent metric of the font
+        'descent-override',     // Overrides the descent metric of the font
+        'line-gap-override',    // Overrides the line gap metric of the font
+        'size-adjust',          // Defines a multiplier for scaling glyph outlines and metrics
+    ];
+    public const CSS_PROPERTIES = [
+        // Background properties
+        'background',
+        'background-attachment',
+        'background-blend-mode',
+        'background-clip',
+        'background-color',
+        'background-image',
+        'background-origin',
+        'background-position',
+        'background-repeat',
+        'background-size',
+
+        // Border and outline properties
+        'border',
+        'border-bottom',
+        'border-bottom-color',
+        'border-bottom-left-radius',
+        'border-bottom-right-radius',
+        'border-bottom-style',
+        'border-bottom-width',
+        'border-collapse',
+        'border-color',
+        'border-image',
+        'border-image-outset',
+        'border-image-repeat',
+        'border-image-slice',
+        'border-image-source',
+        'border-image-width',
+        'border-left',
+        'border-left-color',
+        'border-left-style',
+        'border-left-width',
+        'border-radius',
+        'border-right',
+        'border-right-color',
+        'border-right-style',
+        'border-right-width',
+        'border-spacing',
+        'border-style',
+        'border-top',
+        'border-top-color',
+        'border-top-left-radius',
+        'border-top-right-radius',
+        'border-top-style',
+        'border-top-width',
+        'border-width',
+        'outline',
+        'outline-color',
+        'outline-offset',
+        'outline-style',
+        'outline-width',
+
+        // Box model properties
+        'box-shadow',
+        'box-sizing',
+
+        // Color properties
+        'color',
+        'opacity',
+
+        // Display and visibility properties
+        'display',
+        'visibility',
+        'z-index',
+
+        // Flexbox properties
+        'align-content',
+        'align-items',
+        'align-self',
+        'flex',
+        'flex-basis',
+        'flex-direction',
+        'flex-flow',
+        'flex-grow',
+        'flex-shrink',
+        'flex-wrap',
+        'justify-content',
+        'order',
+
+        // Grid properties
+        'grid',
+        'grid-area',
+        'grid-auto-columns',
+        'grid-auto-flow',
+        'grid-auto-rows',
+        'grid-column',
+        'grid-column-end',
+        'grid-column-gap',
+        'grid-column-start',
+        'grid-gap',
+        'grid-row',
+        'grid-row-end',
+        'grid-row-gap',
+        'grid-row-start',
+        'grid-template',
+        'grid-template-areas',
+        'grid-template-columns',
+        'grid-template-rows',
+
+        // Margin and padding properties
+        'margin',
+        'margin-bottom',
+        'margin-left',
+        'margin-right',
+        'margin-top',
+        'padding',
+        'padding-bottom',
+        'padding-left',
+        'padding-right',
+        'padding-top',
+
+        // Positioning properties
+        'bottom',
+        'clear',
+        'clip',
+        'float',
+        'left',
+        'position',
+        'right',
+        'top',
+
+        // Table properties
+        'border-collapse',
+        'border-spacing',
+        'caption-side',
+        'empty-cells',
+        'table-layout',
+
+        // Text and typography properties
+        'direction',
+        'font',
+        'font-family',
+        'font-feature-settings',
+        'font-kerning',
+        'font-optical-sizing',
+        'font-size',
+        'font-size-adjust',
+        'font-stretch',
+        'font-style',
+        'font-variant',
+        'font-variant-alternates',
+        'font-variant-caps',
+        'font-variant-east-asian',
+        'font-variant-ligatures',
+        'font-variant-numeric',
+        'font-variant-position',
+        'font-weight',
+        'letter-spacing',
+        'line-height',
+        'quotes',
+        'text-align',
+        'text-align-last',
+        'text-combine-upright',
+        'text-decoration',
+        'text-decoration-color',
+        'text-decoration-line',
+        'text-decoration-style',
+        'text-indent',
+        'text-justify',
+        'text-overflow',
+        'text-shadow',
+        'text-transform',
+        'unicode-bidi',
+        'vertical-align',
+        'white-space',
+        'word-break',
+        'word-spacing',
+        'word-wrap',
+        'writing-mode',
+
+        // Animation properties
+        'animation',
+        'animation-delay',
+        'animation-direction',
+        'animation-duration',
+        'animation-fill-mode',
+        'animation-iteration-count',
+        'animation-name',
+        'animation-play-state',
+        'animation-timing-function',
+
+        // Transition properties
+        'transition',
+        'transition-delay',
+        'transition-duration',
+        'transition-property',
+        'transition-timing-function',
+
+        // Transform properties
+        'transform',
+        'transform-origin',
+        'transform-style',
+
+        // Miscellaneous properties
+        'all',
+        'content',
+        'cursor',
+        'filter',
+        'resize',
+        'scroll-behavior',
+        'will-change',
+        'clip-path',
+        'perspective',
+        'perspective-origin',
+        'backface-visibility',
+        'overflow',
+        'overflow-x',
+        'overflow-y',
+        'user-select'
+    ];
+
+
+private const string INDENT = '  ';
 
     /**
      * Generates a CSS `@font-face` rule based on the provided font data.

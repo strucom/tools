@@ -121,7 +121,7 @@ class PhpTools
         $result = [];
         foreach ($keyList as $keys) {
             $flatKey = implode($keySeparator, $keys);
-            $result[$flatKey] = self::keyLookup($valueArray, $keys, $defaultValue);
+            $result[$flatKey] = self::keyLookup(valueArray: $valueArray, keys: $keys, defaultValue: $defaultValue);
         }
         return $result;
     }
@@ -218,18 +218,18 @@ class PhpTools
     /**
      * Normalize a string of tokens to return an array or a string of unique tokens separated by a single space.
      *
-     * @param string $input The input string containing tokens.
+     * @param string $string     The input string containing tokens.
      * @param bool   $ignoreCase Ignore the case when filtering for unique tokens.
-     * @param bool   $asArray return tokens as an array
+     * @param bool   $asArray    return tokens as an array
      *
      * @return string|array An array or a string of unique tokens separated by a single space.
      *
      * @since PHP 7.4
      * @author af
      */
-    public static function tokenizeString(string $input, bool $ignoreCase = false, bool $asArray = false): string|array
+    public static function tokenizeString(string $string, bool $ignoreCase = false, bool $asArray = false): string|array
     {
-        $words = preg_split(pattern: '/\s+/', subject: $input, flags: PREG_SPLIT_NO_EMPTY);
+        $words = preg_split(pattern: '/\s+/', subject: $string, flags: PREG_SPLIT_NO_EMPTY);
 
         if ($ignoreCase) {
             $lowercaseWords = array_map(fn($word) => strtolower($word), $words);
@@ -275,6 +275,6 @@ class PhpTools
             }
         }
 
-        return self::tokenizeString(implode(' ', $allTokens), asArray: $asArray);
+        return self::tokenizeString(string: implode(' ', $allTokens), asArray: $asArray);
     }
 }
