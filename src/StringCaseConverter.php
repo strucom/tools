@@ -71,7 +71,7 @@ class StringCaseConverter
         }
         $lower = ($validate & self::ACCEPT_DIGITS_LC) ? 'a-z0-9' : 'a-z';
         $upper = ($validate & self::ACCEPT_DIGITS_UC) ? 'A-Z0-9' : 'A-Z';
-        $string = self::sanitizeCase(string: $string, format: $inFormat, validateInput: $validate, lower: $lower, upper: $upper);
+        $string = self::sanitizeCase(string: $string, format: $inFormat, validate: $validate, lower: $lower, upper: $upper);
         $words = self::normalizeToWords(string: $string, format: $inFormat, lower: $lower, upper: $upper);
         $result = self::convertWordsToFormat(words: $words, format: $outFormat);
         if (($validate & self::ALLOW_INVALID_RESULT) || self::isValidCase(
@@ -98,8 +98,13 @@ class StringCaseConverter
      */
     public static function isValidCase(string $string, string $format, int $validate = self::VALIDATE): bool
     {
-
-        if (!self::validateInitial($string, $validate)) {
+        if ($string === '') {
+            return boolval($validate & self::ALLOW_EMPTY);
+        }
+        if (!($validate & self::VALIDATE)) {
+            return true;
+        }
+        if (($validate & self::NO_LEADING_DIGITS) && preg_match('/^\d/', $string)) {
             return false;
         }
         $lower = ($validate & self::ACCEPT_DIGITS_LC) ? 'a-z0-9' : 'a-z';
@@ -108,30 +113,6 @@ class StringCaseConverter
             return self::validateWithEmptyWords($string, $format, $lower, $upper);
         }
         return self::validateWithWords($string, $format, $lower, $upper);
-    }
-
-    /**
-     * Performs initial validation checks on the input string.
-     *
-     * @param string $string   The input string.
-     * @param int    $validate Validation mode as a bitmask.
-     *
-     * @return bool True if the initial validation passes, false otherwise.
-     * @since PHP 7.0
-     * @author af
-     */
-    private static function validateInitial(string $string, int $validate): bool
-    {
-        if ($string === '') {
-            return ($validate & self::ALLOW_EMPTY);
-        }
-        if (!($validate & self::VALIDATE)) {
-            return true;
-        }
-        if (($validate & self::NO_LEADING_DIGITS) && preg_match('/^\d/', $string)) {
-            return false;
-        }
-        return true;
     }
 
     /**
@@ -208,23 +189,23 @@ class StringCaseConverter
      * It does not guarantee that the returned string will strictly adhere to the given format.
      * For example, it will remove invalid characters but will not enforce capitalization or structure rules.
      *
-     * @param string $string The input string to be sanitized.
-     * @param string $format The format of the input string (use class constants).
-     * @param int $validateInput Validation mode as a bitmask (e.g., VALIDATE | ACCEPT_DIGITS).
+     * @param string $string   The input string to be sanitized.
+     * @param string $format   The format of the input string (use class constants).
+     * @param int    $validate Validation mode as a bitmask (e.g., VALIDATE | ACCEPT_DIGITS).
      * @return string The sanitized string with offending characters removed.
      *
      * @throws InvalidArgumentException If an unsupported format is provided.
      * @since PHP 7.0
      * @author af
      */
-    private static function sanitizeCase(string $string, string $format, int $validateInput, string $lower, string $upper): string
+    private static function sanitizeCase(string $string, string $format, int $validate, string $lower, string $upper): string
     {
-        if (!($validateInput & self::SANITIZE)) {
+        if (!($validate & self::SANITIZE)) {
             return $string;
         }
 
         // Remove leading digits if NO_LEADING_DIGITS is set
-        if ($validateInput & self::NO_LEADING_DIGITS) {
+        if ($validate & self::NO_LEADING_DIGITS) {
             $string = ltrim($string, '0123456789');
         }
 
@@ -242,9 +223,12 @@ class StringCaseConverter
             self::TITLE_CASE, self::UNDERSCORE_TITLE_CASE => preg_replace("/[^_$lower$upper]/", '', $string),
             default => throw new InvalidArgumentException(sprintf('Unsupported format: %s', $format)),
         };
+        if (!($validate & self::ALLOW_EMPTY_WORDS)) {
+            $sanitized = rtrim($sanitized, '_-');
+        }
 
         // Remove trailing underscores
-        return rtrim($sanitized, '_');
+        return $sanitized;
     }
 
 

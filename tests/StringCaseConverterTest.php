@@ -18,7 +18,7 @@ class StringCaseConverterTest extends TestCase
         self::assertTrue(StringCaseConverter::isValidCase('9a565', StringCaseConverter::PASCAL_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::ACCEPT_DIGITS_UC));
         self::assertTrue(StringCaseConverter::isValidCase('3a_Al', StringCaseConverter::TITLE_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::ACCEPT_DIGITS_UC));
         self::assertFalse(StringCaseConverter::isValidCase('34_AB_', StringCaseConverter::TITLE_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::ACCEPT_DIGITS_UC));
-        self::assertFalse(StringCaseConverter::isValidCase('a5f3v', StringCaseConverter::CAMEL_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::ACCEPT_DIGITS_UC));
+        self::assertFalse(StringCaseConverter::isValidCase('a53v', StringCaseConverter::CAMEL_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::ACCEPT_DIGITS_UC));
 
         // ACCEPT_DIGITS_LC
         self::assertTrue(StringCaseConverter::isValidCase('5f3v', StringCaseConverter::CAMEL_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::ACCEPT_DIGITS_LC));
