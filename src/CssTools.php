@@ -425,7 +425,7 @@ private const string INDENT = '  ';
                     $convertedKey = StringCaseConverter::convertCase(
                         string: $fontDataKey,
                         outFormat: StringCaseConverter::KEBAB_CASE,
-                        validateInput: StringCaseConverter::SANITIZE | StringCaseConverter::ALLOW_EMPTY
+                        validate: StringCaseConverter::SANITIZE | StringCaseConverter::ALLOW_EMPTY
                     );
                     return in_array($convertedKey, self::FONT_FACE_DESCRIPTORS, true) ? $convertedKey : '';
                 } catch (InvalidArgumentException) {
@@ -436,14 +436,14 @@ private const string INDENT = '  ';
                     $convertedKey = StringCaseConverter::convertCase(
                         string: $fontDataKey,
                         outFormat: StringCaseConverter::KEBAB_CASE,
-                        validateInput: StringCaseConverter::VALIDATE
+                        validate: StringCaseConverter::VALIDATE
                     );
                 } catch (InvalidArgumentException $exception) {
                     try {
                         $convertedKey = StringCaseConverter::convertCase(
                             string: $fontDataKey,
                             outFormat: StringCaseConverter::KEBAB_CASE,
-                            validateInput: StringCaseConverter::SANITIZE | StringCaseConverter::ALLOW_EMPTY
+                            validate: StringCaseConverter::SANITIZE | StringCaseConverter::ALLOW_EMPTY
                         );
                         trigger_error(
                             sprintf(
@@ -483,7 +483,7 @@ private const string INDENT = '  ';
                     $convertedKey = StringCaseConverter::convertCase(
                         string: $fontDataKey,
                         outFormat: StringCaseConverter::KEBAB_CASE,
-                        validateInput: StringCaseConverter::VALIDATE
+                        validate: StringCaseConverter::VALIDATE
                     );
                 } catch (InvalidArgumentException $exception) {
                     throw new InvalidArgumentException(

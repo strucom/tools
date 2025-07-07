@@ -35,84 +35,100 @@ class StringCaseConverter
     public const string UNDERSCORE_TITLE_CASE = '_Title_Case';
 
 // Validation constants (bitmask)
-    public const int DO_NOT_VALIDATE   = 0b000000; // 0
-    public const int SANITIZE          = 0b000001; // 1
-    public const int VALIDATE          = 0b000010; // 2
-    public const int ACCEPT_DIGITS     = 0b000100; // 4
-    public const int NO_LEADING_DIGITS = 0b001100; // 12 (includes ACCEPT_DIGITS)
-    public const int ALLOW_EMPTY_WORDS = 0b010000; // 16
-    public const int ALLOW_EMPTY       = 0b110000; // 48
+    public const int DO_NOT_VALIDATE   = 0b00000000; // 0
+    public const int SANITIZE          = 0b00000001; // 1
+    public const int VALIDATE          = 0b00000010; // 2
+    public const int ACCEPT_DIGITS_UC  = 0b00000100; // 4
+    public const int ACCEPT_DIGITS_LC  = 0b00001000; // 8
+    public const int ACCEPT_DIGITS     = 0b00001100; // 12 (ACCEPT_DIGITS_UC | ACCEPT_DIGITS_LC)
+    public const int NO_LEADING_DIGITS = 0b00010000; // 16
+    public const int ALLOW_EMPTY_WORDS = 0b00100000; // 32
+    public const int ALLOW_EMPTY       = 0b01100000; // 96 (includes ALLOW_EMPTY_WORDS)
+    public const int ALLOW_INVALID_RESULT = 0b1000000; // 128
 
 
 
     /**
      * Converts a string from one case format to another.
      *
-     * @param string $string The input string to be converted.
-     * @param string $inFormat The format of the input string (use class constants).
+     * @param string $string    The input string to be converted.
+     * @param string $inFormat  The format of the input string (use class constants).
      * @param string $outFormat The desired format of the output string (use class constants).
-     * @param int $validateInput Validation mode as a bitmask (e.g., VALIDATE | ACCEPT_DIGITS).
+     * @param int    $validate  Validation mode as a bitmask (e.g., VALIDATE | ACCEPT_DIGITS).
      * @return string The converted string in the desired format.
      *
      * @throws InvalidArgumentException If validation fails and VALIDATE is set in the bitmask.
      * @since PHP 7.0
      * @author af
      */
-    public static function convertCase(string $string, string $inFormat = self::ANY_CASE, string $outFormat = self::CAMEL_CASE, int $validateInput = self::SANITIZE): string
+    public static function convertCase(string $string, string $inFormat = self::ANY_CASE, string $outFormat = self::CAMEL_CASE, int $validate = self::SANITIZE): string
     {
-        if (!self::isValidCase(string: $string, format: $inFormat, validateInput: $validateInput)) {
+        if (!self::isValidCase(string: $string, format: $inFormat, validate: $validate)) {
             if ($string === '') {
                 throw new InvalidArgumentException('Input string is empty and bitmask ALLOW_EMPTY is not set.');
             }
             throw new InvalidArgumentException(sprintf('Input string "%s" is not valid for %s.', $string, $inFormat));
         }
-        $string = self::sanitizeCase(string: $string, format: $inFormat, validateInput: $validateInput);
-        $words = self::normalizeToWords(string: $string, format: $inFormat);
-        return self::convertWordsToFormat(words: $words, format: $outFormat);
+        $lower = ($validate & self::ACCEPT_DIGITS_LC) ? 'a-z0-9' : 'a-z';
+        $upper = ($validate & self::ACCEPT_DIGITS_UC) ? 'A-Z0-9' : 'A-Z';
+        $string = self::sanitizeCase(string: $string, format: $inFormat, validateInput: $validate, lower: $lower, upper: $upper);
+        $words = self::normalizeToWords(string: $string, format: $inFormat, lower: $lower, upper: $upper);
+        $result = self::convertWordsToFormat(words: $words, format: $outFormat);
+        if (($validate & self::ALLOW_INVALID_RESULT) || self::isValidCase(
+                string: $result,
+                format: $outFormat,
+                validate: $validate)) {
+            return $result;
+        } else {
+            throw new InvalidArgumentException(sprintf('Output string "%s" is not valid for %s.', $string, $outFormat));
+        }
     }
 
     /**
      * Validates the input string for the specified case format.
      *
-     * @param string $string The input string.
-     * @param string $format The format of the input string.
-     * @param int $validateInput Validation mode as a bitmask (e.g., VALIDATE | ACCEPT_DIGITS).
+     * @param string $string   The input string.
+     * @param string $format   The format of the input string.
+     * @param int    $validate Validation mode as a bitmask (e.g., VALIDATE | ACCEPT_DIGITS).
      * @return bool True if the string is valid or bitmask does not include VALIDATE, false otherwise.
      *
      * @throws InvalidArgumentException If an unsupported format is provided.
      * @since PHP 7.0
      * @author af
      */
-    public static function isValidCase(string $string, string $format, int $validateInput = self::VALIDATE): bool
+    public static function isValidCase(string $string, string $format, int $validate = self::VALIDATE): bool
     {
-        if (!self::validateInitial($string, $validateInput)) {
+
+        if (!self::validateInitial($string, $validate)) {
             return false;
         }
-        $digitPattern = ($validateInput & self::ACCEPT_DIGITS) ? '0-9' : '';
-        if ($validateInput & self::ALLOW_EMPTY_WORDS) {
-            return self::validateWithEmptyWords($string, $format, $digitPattern);
+        $lower = ($validate & self::ACCEPT_DIGITS_LC) ? 'a-z0-9' : 'a-z';
+        $upper = ($validate & self::ACCEPT_DIGITS_UC) ? 'A-Z0-9' : 'A-Z';
+        if ($validate & self::ALLOW_EMPTY_WORDS) {
+            return self::validateWithEmptyWords($string, $format, $lower, $upper);
         }
-        return self::validateWithWords($string, $format, $digitPattern);
+        return self::validateWithWords($string, $format, $lower, $upper);
     }
 
     /**
      * Performs initial validation checks on the input string.
      *
-     * @param string $string The input string.
-     * @param int $validateInput Validation mode as a bitmask.
+     * @param string $string   The input string.
+     * @param int    $validate Validation mode as a bitmask.
+     *
      * @return bool True if the initial validation passes, false otherwise.
      * @since PHP 7.0
      * @author af
      */
-    private static function validateInitial(string $string, int $validateInput): bool
+    private static function validateInitial(string $string, int $validate): bool
     {
         if ($string === '') {
-            return ($validateInput & self::ALLOW_EMPTY);
+            return ($validate & self::ALLOW_EMPTY);
         }
-        if (!($validateInput & self::VALIDATE)) {
+        if (!($validate & self::VALIDATE)) {
             return true;
         }
-        if (($validateInput & self::NO_LEADING_DIGITS) && preg_match('/^\d/', $string)) {
+        if (($validate & self::NO_LEADING_DIGITS) && preg_match('/^\d/', $string)) {
             return false;
         }
         return true;
@@ -123,28 +139,30 @@ class StringCaseConverter
      *
      * @param string $string The input string.
      * @param string $format The format of the input string.
-     * @param string $digitPattern The digit pattern based on ACCEPT_DIGITS.
+     * @param string $lower The character pattern treated as lower case.
+     * @param string $upper The character pattern treated as upper case.
+     *
      * @return bool True if the string matches the format, false otherwise.
      * @throws InvalidArgumentException If the format is unsupported.
      * @since PHP 7.0
      * @author af
      */
-    private static function validateWithEmptyWords(string $string, string $format, string $digitPattern): bool
+    private static function validateWithEmptyWords(string $string, string $format, string $lower, string $upper): bool
     {
         return match ($format) {
-            self::ANY_CASE => preg_match("/^[a-zA-Z_$digitPattern\-]*$/", $string) === 1,
-            self::CAMEL_CASE => preg_match("/^[a-z$digitPattern]*([A-Z][a-z$digitPattern]*)*$/", $string) === 1,
-            self::SNAKE_CASE => preg_match("/^[a-z_$digitPattern]*$/", $string) === 1,
-            self::KEBAB_CASE => preg_match("/^[a-z\-$digitPattern]*$/", $string) === 1,
-            self::PASCAL_CASE => preg_match("/^[A-Z]?[A-Za-z$digitPattern]*$/", $string) === 1,
-            self::SCREAMING_SNAKE_CASE => preg_match("/^[A-Z_$digitPattern]*$/", $string) === 1,
-            self::TITLE_CASE => preg_match("/^([A-Z][a-z$digitPattern]*)?(_[A-Z][a-z$digitPattern]*)*$/", $string) === 1,
-            self::UNDERSCORE_CAMEL_CASE => preg_match("/^_([a-z$digitPattern]*([A-Z][a-z$digitPattern]*)*)?$/", $string) === 1,
-            self::UNDERSCORE_SNAKE_CASE => preg_match("/^_[a-z_$digitPattern]*$/", $string) === 1,
-            self::UNDERSCORE_KEBAB_CASE => preg_match("/^_[a-z\-$digitPattern]*$/", $string) === 1,
-            self::UNDERSCORE_PASCAL_CASE => preg_match("/^_([A-Z][A-Za-z$digitPattern]*)?$/", $string) === 1,
-            self::UNDERSCORE_SCREAMING_SNAKE_CASE => preg_match("/^_[A-Z_$digitPattern]*$/", $string) === 1,
-            self::UNDERSCORE_TITLE_CASE => preg_match("/^_([A-Z][a-z$digitPattern]*)?(_[A-Z][a-z$digitPattern]*)*$/", $string) === 1,
+            self::ANY_CASE => preg_match("/^[$lower$upper\-]*$/", $string) === 1,
+            self::CAMEL_CASE => preg_match("/^[$lower]*([$upper][$lower]*)*$/", $string) === 1,
+            self::SNAKE_CASE => preg_match("/^[$lower]*$/", $string) === 1,
+            self::KEBAB_CASE => preg_match("/^[\-$lower]*$/", $string) === 1,
+            self::PASCAL_CASE => preg_match("/^[$upper]?[$lower$upper]*$/", $string) === 1,
+            self::SCREAMING_SNAKE_CASE => preg_match("/^[_$upper]*$/", $string) === 1,
+            self::TITLE_CASE => preg_match("/^([$upper][$lower]*)?(_[$upper][$lower]*)*$/", $string) === 1,
+            self::UNDERSCORE_CAMEL_CASE => preg_match("/^_([$lower]*([$upper][$lower]*)*)?$/", $string) === 1,
+            self::UNDERSCORE_SNAKE_CASE => preg_match("/^_[_$lower]*$/", $string) === 1,
+            self::UNDERSCORE_KEBAB_CASE => preg_match("/^_[\-$upper]*$/", $string) === 1,
+            self::UNDERSCORE_PASCAL_CASE => preg_match("/^_([$upper][$upper$lower]*)?$/", $string) === 1,
+            self::UNDERSCORE_SCREAMING_SNAKE_CASE => preg_match("/^_[_$upper]*$/", $string) === 1,
+            self::UNDERSCORE_TITLE_CASE => preg_match("/^_([$upper][$lower]*)?(_([$upper][$lower]*)?)*$/", $string) === 1,
             default => throw new InvalidArgumentException(sprintf('Unsupported format: %s', $format)),
         };
     }
@@ -154,28 +172,30 @@ class StringCaseConverter
      *
      * @param string $string The input string.
      * @param string $format The format of the input string.
-     * @param string $digitPattern The digit pattern based on ACCEPT_DIGITS.
+     * @param string $lower The character pattern treated as lower case.
+     * @param string $upper The character pattern treated as upper case.
+     *
      * @return bool True if the string matches the format, false otherwise.
      * @throws InvalidArgumentException If the format is unsupported.
      * @since PHP 7.0
      * @author af
      */
-    private static function validateWithWords(string $string, string $format, string $digitPattern): bool
+    private static function validateWithWords(string $string, string $format, string $lower, string $upper): bool
     {
         return match ($format) {
-            self::ANY_CASE => preg_match("/^[a-zA-Z_$digitPattern][a-zA-Z_$digitPattern\-]*$/", $string) === 1,
-            self::CAMEL_CASE => preg_match("/^[a-z$digitPattern]+([A-Z][a-z$digitPattern]*)*$/", $string) === 1,
-            self::SNAKE_CASE => preg_match("/^[a-z$digitPattern]+(_[a-z$digitPattern]+)*$/", $string) === 1,
-            self::KEBAB_CASE => preg_match("/^[a-z$digitPattern]+(-[a-z$digitPattern]+)*$/", $string) === 1,
-            self::PASCAL_CASE => preg_match("/^[A-Z][a-z$digitPattern]*([A-Z][a-z$digitPattern]*)*$/", $string) === 1,
-            self::SCREAMING_SNAKE_CASE => preg_match("/^[A-Z$digitPattern]+(_[A-Z$digitPattern]+)*$/", $string) === 1,
-            self::TITLE_CASE => preg_match("/^[A-Z][a-z$digitPattern]*(_[A-Z][a-z$digitPattern]*)*$/", $string) === 1,
-            self::UNDERSCORE_CAMEL_CASE => preg_match("/^_[a-z$digitPattern]+([A-Z][a-z$digitPattern]*)*$/", $string) === 1,
-            self::UNDERSCORE_SNAKE_CASE => preg_match("/^_[a-z$digitPattern]+(_[a-z$digitPattern]+)*$/", $string) === 1,
-            self::UNDERSCORE_KEBAB_CASE => preg_match("/^_[a-z$digitPattern]+(-[a-z$digitPattern]+)*$/", $string) === 1,
-            self::UNDERSCORE_PASCAL_CASE => preg_match("/^_[A-Z][a-z$digitPattern]*([A-Z][a-z$digitPattern]*)*$/", $string) === 1,
-            self::UNDERSCORE_SCREAMING_SNAKE_CASE => preg_match("/^_[A-Z$digitPattern]+(_[A-Z$digitPattern]+)*$/", $string) === 1,
-            self::UNDERSCORE_TITLE_CASE => preg_match("/^_[A-Z][a-z$digitPattern]*(_[A-Z][a-z$digitPattern]*)*$/", $string) === 1,
+            self::ANY_CASE => preg_match("/^[_$lower$upper][_$lower$upper\-]*$/", $string) === 1,
+            self::CAMEL_CASE => preg_match("/^[$lower]+([$upper][$lower]*)*$/", $string) === 1,
+            self::SNAKE_CASE => preg_match("/^[$lower]+(_[$lower]+)*$/", $string) === 1,
+            self::KEBAB_CASE => preg_match("/^[$lower]+(-[$lower]+)*$/", $string) === 1,
+            self::PASCAL_CASE => preg_match("/^[$upper][$lower]*([$upper][$lower]*)*$/", $string) === 1,
+            self::SCREAMING_SNAKE_CASE => preg_match("/^[$upper]+(_[$upper]+)*$/", $string) === 1,
+            self::TITLE_CASE => preg_match("/^[$upper][$lower]*(_[$upper][$lower]*)*$/", $string) === 1,
+            self::UNDERSCORE_CAMEL_CASE => preg_match("/^_[$lower]+([$upper][$lower]*)*$/", $string) === 1,
+            self::UNDERSCORE_SNAKE_CASE => preg_match("/^_[$lower]+(_[$lower]+)*$/", $string) === 1,
+            self::UNDERSCORE_KEBAB_CASE => preg_match("/^_[$lower]+(-[$lower]+)*$/", $string) === 1,
+            self::UNDERSCORE_PASCAL_CASE => preg_match("/^_[$upper][$lower]*([$upper][$lower]*)*$/", $string) === 1,
+            self::UNDERSCORE_SCREAMING_SNAKE_CASE => preg_match("/^_[$upper]+(_[$upper]+)*$/", $string) === 1,
+            self::UNDERSCORE_TITLE_CASE => preg_match("/^_[$upper][$lower]*(_[$upper][$lower]*)*$/", $string) === 1,
             default => throw new InvalidArgumentException(sprintf('Unsupported format: %s', $format)),
         };
     }
@@ -197,29 +217,36 @@ class StringCaseConverter
      * @since PHP 7.0
      * @author af
      */
-    private static function sanitizeCase(string $string, string $format, int $validateInput = self::SANITIZE): string
+    private static function sanitizeCase(string $string, string $format, int $validateInput, string $lower, string $upper): string
     {
         if (!($validateInput & self::SANITIZE)) {
             return $string;
         }
-        if (($validateInput & self::NO_LEADING_DIGITS)) {
+
+        // Remove leading digits if NO_LEADING_DIGITS is set
+        if ($validateInput & self::NO_LEADING_DIGITS) {
             $string = ltrim($string, '0123456789');
         }
-        $digitPattern = ($validateInput & self::ACCEPT_DIGITS) ? '0-9' : '';
-        return match ($format) {
-            self::ANY_CASE => preg_replace("/[^a-zA-Z_$digitPattern\-]/", '', $string),
-            self::CAMEL_CASE => preg_replace("/[^a-zA-Z$digitPattern]/", '', $string),
-            self::UNDERSCORE_CAMEL_CASE => '_' . preg_replace("/[^a-zA-Z$digitPattern]/", '', $string),
-            self::SNAKE_CASE, self::UNDERSCORE_SNAKE_CASE => preg_replace("/[^a-z_$digitPattern]/", '', strtolower($string)),
-            self::KEBAB_CASE => preg_replace("/[^a-z\-$digitPattern]/", '', strtolower($string)),
-            self::UNDERSCORE_KEBAB_CASE => '_' . preg_replace("/[^a-z\-$digitPattern]/", '', strtolower($string)),
-            self::PASCAL_CASE => preg_replace("/[^a-zA-Z$digitPattern]/", '', ucfirst($string)),
-            self::UNDERSCORE_PASCAL_CASE => '_' . preg_replace("/[^a-zA-Z$digitPattern]/", '', ucfirst($string)),
-            self::SCREAMING_SNAKE_CASE, self::UNDERSCORE_SCREAMING_SNAKE_CASE => preg_replace("/[^A-Z_$digitPattern]/", '', strtoupper($string)),
-            self::TITLE_CASE, self::UNDERSCORE_TITLE_CASE => preg_replace("/[^a-zA-Z_$digitPattern]/", '', $string),
+
+        // Sanitize the string based on the format
+        $sanitized = match ($format) {
+            self::ANY_CASE => preg_replace("/[^_$lower$upper\-]/", '', $string),
+            self::CAMEL_CASE => preg_replace("/[^$lower$upper]/", '', $string),
+            self::UNDERSCORE_CAMEL_CASE => '_' . preg_replace("/[^$lower$upper]/", '', $string),
+            self::SNAKE_CASE, self::UNDERSCORE_SNAKE_CASE => preg_replace("/[^_$lower]/", '', strtolower($string)),
+            self::KEBAB_CASE => preg_replace("/[^-$lower]/", '', strtolower($string)),
+            self::UNDERSCORE_KEBAB_CASE => '_' . preg_replace("/[^-$lower]/", '', strtolower($string)),
+            self::PASCAL_CASE => preg_replace("/[^$lower$upper]/", '', ucfirst($string)),
+            self::UNDERSCORE_PASCAL_CASE => '_' . preg_replace("/[^$lower$upper]/", '', ucfirst($string)),
+            self::SCREAMING_SNAKE_CASE, self::UNDERSCORE_SCREAMING_SNAKE_CASE => preg_replace("/[^_$upper]/", '', strtoupper($string)),
+            self::TITLE_CASE, self::UNDERSCORE_TITLE_CASE => preg_replace("/[^_$lower$upper]/", '', $string),
             default => throw new InvalidArgumentException(sprintf('Unsupported format: %s', $format)),
         };
+
+        // Remove trailing underscores
+        return rtrim($sanitized, '_');
     }
+
 
     /**
      * Normalizes a string to an array of words in lower case based on the input format.
@@ -236,21 +263,21 @@ class StringCaseConverter
      * @since PHP 7.0
      * @author af
      */
-    private static function normalizeToWords(string $string, string $format): array
+    private static function normalizeToWords(string $string, string $format, string $lower, string $upper): array
     {
         return match ($format) {
             self::ANY_CASE => array_map(
                 fn($item) => strtolower($item),
-                preg_split('/[_\-]|(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])/', $string)
+                preg_split("/[_\-]|(?<=[$lower])(?=[$upper])|(?<=[$upper])(?=[$upper][$lower])/", $string)
             ),
             self::CAMEL_CASE, self::PASCAL_CASE =>
-            array_map(fn($item) => strtolower($item), preg_split('/(?=[A-Z])/', lcfirst($string))),
+            array_map(fn($item) => strtolower($item), preg_split("/(?=[$upper])/", lcfirst($string))),
             self::SNAKE_CASE, self::SCREAMING_SNAKE_CASE, self::TITLE_CASE =>
             explode('_', strtolower($string)),
             self::KEBAB_CASE =>
             explode('-', strtolower($string)),
             self::UNDERSCORE_CAMEL_CASE, self::UNDERSCORE_PASCAL_CASE =>
-            array_map(fn($item) => strtolower($item), preg_split('/(?=[A-Z])/', lcfirst(ltrim($string, '_')))),
+            array_map(fn($item) => strtolower($item), preg_split("/(?=[$upper])/", lcfirst(ltrim($string, '_')))),
             self::UNDERSCORE_SNAKE_CASE, self::UNDERSCORE_SCREAMING_SNAKE_CASE, self::UNDERSCORE_TITLE_CASE =>
             explode('_', strtolower(ltrim($string, '_'))),
             self::UNDERSCORE_KEBAB_CASE =>
