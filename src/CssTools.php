@@ -393,7 +393,7 @@ private const string INDENT = '  ';
         PhpTools::sortArrayByKeyOrder($properties,self::FONT_FACE_DESCRIPTORS);
         if (empty($properties['src'])) {
             return ErrorTools::exceptionSwitch(
-                exception: new InvalidArgumentException(sprintf('$fontData values are empty for src and for the filenameKey "%".', $filenameKey)),
+                exception: new InvalidArgumentException(sprintf('$fontData values are empty for src and for the filenameKey "%s".', $filenameKey)),
                 errorMode: $errorMode,
                 default: ''
             );
