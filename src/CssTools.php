@@ -609,7 +609,7 @@ private const string INDENT = '  ';
                 default: '');
         }
 
-        return (count($src) > 1 ? $newLineIndent : '') . implode(", $newLineIndent", $src);
+        return (count($src) > 1 ? $newLineIndent : '') . implode(",$newLineIndent", $src);
     }
 
 

@@ -87,10 +87,11 @@ class CssToolsTest extends TestCase
      */
     public function testFontSrcFromFilenames(): void
     {
+        $newLineIndent = 'X';
         $filenames = ['font1.woff', 'font2.ttf'];
-        $expected = 'url("font1.woff") format("woff"), ' . "\n" .
-            '  url("font2.ttf") format("truetype")';
-        $result = CssTools::fontSrcFromFilenames($filenames, '', '  ', ErrorTools::ERROR_MODE_EXCEPTION);
+        $expected = $newLineIndent . 'url("P/font1.woff") format("woff"),' . $newLineIndent .
+            'url("P/font2.ttf") format("truetype")';
+        $result = CssTools::fontSrcFromFilenames($filenames, 'P/', $newLineIndent, ErrorTools::ERROR_MODE_EXCEPTION);
         self::assertSame($expected, $result);
 
         // Test with invalid filename
