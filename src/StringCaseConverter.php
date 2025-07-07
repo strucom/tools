@@ -40,7 +40,8 @@ class StringCaseConverter
     public const int VALIDATE          = 0b000010; // 2
     public const int ACCEPT_DIGITS     = 0b000100; // 4
     public const int NO_LEADING_DIGITS = 0b001100; // 12 (includes ACCEPT_DIGITS)
-    public const int ALLOW_EMPTY       = 0b010000; // 16
+    public const int ALLOW_EMPTY_WORDS = 0b010000; // 16
+    public const int ALLOW_EMPTY       = 0b110000; // 48
 
 
 
@@ -70,7 +71,6 @@ class StringCaseConverter
         return self::convertWordsToFormat(words: $words, format: $outFormat);
     }
 
-
     /**
      * Validates the input string for the specified case format.
      *
@@ -85,16 +85,83 @@ class StringCaseConverter
      */
     public static function isValidCase(string $string, string $format, int $validateInput = self::VALIDATE): bool
     {
+        if (!self::validateInitial($string, $validateInput)) {
+            return false;
+        }
+        $digitPattern = ($validateInput & self::ACCEPT_DIGITS) ? '0-9' : '';
+        if ($validateInput & self::ALLOW_EMPTY_WORDS) {
+            return self::validateWithEmptyWords($string, $format, $digitPattern);
+        }
+        return self::validateWithWords($string, $format, $digitPattern);
+    }
+
+    /**
+     * Performs initial validation checks on the input string.
+     *
+     * @param string $string The input string.
+     * @param int $validateInput Validation mode as a bitmask.
+     * @return bool True if the initial validation passes, false otherwise.
+     * @since PHP 7.0
+     * @author af
+     */
+    private static function validateInitial(string $string, int $validateInput): bool
+    {
         if ($string === '') {
             return ($validateInput & self::ALLOW_EMPTY);
         }
         if (!($validateInput & self::VALIDATE)) {
             return true;
         }
-        if (($validateInput & self::NO_LEADING_DIGITS) && preg_match('/^\d',$string)) {
+        if (($validateInput & self::NO_LEADING_DIGITS) && preg_match('/^\d/', $string)) {
             return false;
         }
-        $digitPattern = ($validateInput & self::ACCEPT_DIGITS) ? '0-9' : '';
+        return true;
+    }
+
+    /**
+     * Validates the string format when ALLOW_EMPTY_WORDS is set.
+     *
+     * @param string $string The input string.
+     * @param string $format The format of the input string.
+     * @param string $digitPattern The digit pattern based on ACCEPT_DIGITS.
+     * @return bool True if the string matches the format, false otherwise.
+     * @throws InvalidArgumentException If the format is unsupported.
+     * @since PHP 7.0
+     * @author af
+     */
+    private static function validateWithEmptyWords(string $string, string $format, string $digitPattern): bool
+    {
+        return match ($format) {
+            self::ANY_CASE => preg_match("/^[a-zA-Z_$digitPattern\-]*$/", $string) === 1,
+            self::CAMEL_CASE => preg_match("/^[a-z$digitPattern]*([A-Z][a-z$digitPattern]*)*$/", $string) === 1,
+            self::SNAKE_CASE => preg_match("/^[a-z_$digitPattern]*$/", $string) === 1,
+            self::KEBAB_CASE => preg_match("/^[a-z\-$digitPattern]*$/", $string) === 1,
+            self::PASCAL_CASE => preg_match("/^[A-Z]?[A-Za-z$digitPattern]*$/", $string) === 1,
+            self::SCREAMING_SNAKE_CASE => preg_match("/^[A-Z_$digitPattern]*$/", $string) === 1,
+            self::TITLE_CASE => preg_match("/^([A-Z][a-z$digitPattern]*)?(_[A-Z][a-z$digitPattern]*)*$/", $string) === 1,
+            self::UNDERSCORE_CAMEL_CASE => preg_match("/^_([a-z$digitPattern]*([A-Z][a-z$digitPattern]*)*)?$/", $string) === 1,
+            self::UNDERSCORE_SNAKE_CASE => preg_match("/^_[a-z_$digitPattern]*$/", $string) === 1,
+            self::UNDERSCORE_KEBAB_CASE => preg_match("/^_[a-z\-$digitPattern]*$/", $string) === 1,
+            self::UNDERSCORE_PASCAL_CASE => preg_match("/^_([A-Z][A-Za-z$digitPattern]*)?$/", $string) === 1,
+            self::UNDERSCORE_SCREAMING_SNAKE_CASE => preg_match("/^_[A-Z_$digitPattern]*$/", $string) === 1,
+            self::UNDERSCORE_TITLE_CASE => preg_match("/^_([A-Z][a-z$digitPattern]*)?(_[A-Z][a-z$digitPattern]*)*$/", $string) === 1,
+            default => throw new InvalidArgumentException(sprintf('Unsupported format: %s', $format)),
+        };
+    }
+
+    /**
+     * Validates the string format when ALLOW_EMPTY_WORDS is not set.
+     *
+     * @param string $string The input string.
+     * @param string $format The format of the input string.
+     * @param string $digitPattern The digit pattern based on ACCEPT_DIGITS.
+     * @return bool True if the string matches the format, false otherwise.
+     * @throws InvalidArgumentException If the format is unsupported.
+     * @since PHP 7.0
+     * @author af
+     */
+    private static function validateWithWords(string $string, string $format, string $digitPattern): bool
+    {
         return match ($format) {
             self::ANY_CASE => preg_match("/^[a-zA-Z_$digitPattern][a-zA-Z_$digitPattern\-]*$/", $string) === 1,
             self::CAMEL_CASE => preg_match("/^[a-z$digitPattern]+([A-Z][a-z$digitPattern]*)*$/", $string) === 1,
@@ -112,6 +179,7 @@ class StringCaseConverter
             default => throw new InvalidArgumentException(sprintf('Unsupported format: %s', $format)),
         };
     }
+
 
     /**
      * Sanitizes the input string for the specified case format.
