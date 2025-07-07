@@ -32,13 +32,13 @@ class StringCaseConverterTest extends TestCase
         self::assertTrue(StringCaseConverter::isValidCase('34aa34P34', StringCaseConverter::CAMEL_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::ACCEPT_DIGITS_LC));
 
         // Empty words with digits
-        self::assertTrue(StringCaseConverter::isValidCase('0-0-', StringCaseConverter::KEBAB_CASE, StringCaseConverter::ALLOW_EMPTY_WORDS | StringCaseConverter::ACCEPT_DIGITS));
-        self::assertFalse(StringCaseConverter::isValidCase('0_0_', StringCaseConverter::SNAKE_CASE, StringCaseConverter::ALLOW_EMPTY_WORDS | StringCaseConverter::NO_LEADING_DIGITS));
+        self::assertTrue(StringCaseConverter::isValidCase('0-0-', StringCaseConverter::KEBAB_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::ALLOW_EMPTY_WORDS | StringCaseConverter::ACCEPT_DIGITS));
+        self::assertFalse(StringCaseConverter::isValidCase('0_0_', StringCaseConverter::SNAKE_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::ALLOW_EMPTY_WORDS | StringCaseConverter::NO_LEADING_DIGITS));
 
         // Empty words without digits
-        self::assertTrue(StringCaseConverter::isValidCase('__', StringCaseConverter::SNAKE_CASE, StringCaseConverter::ALLOW_EMPTY_WORDS));
-        self::assertTrue(StringCaseConverter::isValidCase('--', StringCaseConverter::KEBAB_CASE, StringCaseConverter::ALLOW_EMPTY_WORDS));
-        self::assertFalse(StringCaseConverter::isValidCase('--', StringCaseConverter::UNDERSCORE_KEBAB_CASE, StringCaseConverter::ALLOW_EMPTY_WORDS));
+        self::assertTrue(StringCaseConverter::isValidCase('__', StringCaseConverter::SNAKE_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::ALLOW_EMPTY_WORDS));
+        self::assertTrue(StringCaseConverter::isValidCase('--', StringCaseConverter::KEBAB_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::ALLOW_EMPTY_WORDS));
+        self::assertFalse(StringCaseConverter::isValidCase('--', StringCaseConverter::UNDERSCORE_KEBAB_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::ALLOW_EMPTY_WORDS));
 
         // Digits handling
         self::assertFalse(StringCaseConverter::isValidCase('123abc', StringCaseConverter::CAMEL_CASE, StringCaseConverter::VALIDATE | StringCaseConverter::NO_LEADING_DIGITS));
