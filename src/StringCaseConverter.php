@@ -172,35 +172,38 @@ class StringCaseConverter
             return true;
         }
         if (in_array($format, [
-        self::UNDERSCORE_CAMEL_CASE,
-        self::UNDERSCORE_PASCAL_CASE,
-        self::UNDERSCORE_SNAKE_CASE,
-        self::UNDERSCORE_TITLE_CASE,
-        self::UNDERSCORE_SCREAMING_SNAKE_CASE,
-        self::UNDERSCORE_KEBAB_CASE,
-        self::UNDERSCORE_TRAIN_CASE,
-        self::UNDERSCORE_SCREAMING_KEBAB_CASE])) {
-        if (!str_starts_with($string, '_')) {
-            return false;
+            self::UNDERSCORE_CAMEL_CASE,
+            self::UNDERSCORE_PASCAL_CASE,
+            self::UNDERSCORE_SNAKE_CASE,
+            self::UNDERSCORE_TITLE_CASE,
+            self::UNDERSCORE_SCREAMING_SNAKE_CASE,
+            self::UNDERSCORE_KEBAB_CASE,
+            self::UNDERSCORE_TRAIN_CASE,
+            self::UNDERSCORE_SCREAMING_KEBAB_CASE])) {
+            if (!str_starts_with($string, '_')) {
+                return false;
+            }
+            $string = substr($string, 1);
+            if (strlen($string) === 0) {
+                return true;
+            }
         }
-        $string = substr($string, 1);
-    }
         return match ($format) {
             self::ANY_CASE => preg_match("/^[_\-$lower$upper]*$/", $string) === 1,
             self::UNDERSCORE_CAMEL_CASE,
-            self::CAMEL_CASE => preg_match("/^([$lower][$lower$upper]*)?$/", $string) === 1,
+            self::CAMEL_CASE => preg_match("/^[$lower][$lower$upper]*$/", $string) === 1,
             self::UNDERSCORE_PASCAL_CASE,
             self::PASCAL_CASE => preg_match("/^[$upper][$lower$upper]*$/", $string) === 1,
             self::UNDERSCORE_SNAKE_CASE,
             self::SNAKE_CASE => preg_match("/^[_$lower]*$/", $string) === 1,
             self::UNDERSCORE_TITLE_CASE,
-            self::TITLE_CASE => preg_match("/^([$upper][$lower]*)?(_[$upper][$lower]*)*$/", $string) === 1,
+            self::TITLE_CASE => preg_match("/^([$upper][$lower]*)?(_([$upper][$lower]*)?)*$/", $string) === 1,
             self::UNDERSCORE_SCREAMING_SNAKE_CASE,
             self::SCREAMING_SNAKE_CASE => preg_match("/^[_$upper]*$/", $string) === 1,
             self::UNDERSCORE_KEBAB_CASE,
             self::KEBAB_CASE => preg_match("/^[\-$lower]*$/", $string) === 1,
             self::UNDERSCORE_TRAIN_CASE,
-            self::TRAIN_CASE => preg_match("/^([$upper][$lower]*)?(-[$upper][$lower]*)*$/", $string) === 1,
+            self::TRAIN_CASE => preg_match("/^([$upper][$lower]*)?(-([$upper][$lower]*)?)*$/", $string) === 1,
             self::UNDERSCORE_SCREAMING_KEBAB_CASE,
             self::SCREAMING_KEBAB_CASE => preg_match("/^[\-$upper]*$/", $string) === 1,
             default => throw new InvalidArgumentException(sprintf('Unsupported format: %s', $format)),
