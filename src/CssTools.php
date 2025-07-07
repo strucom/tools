@@ -412,12 +412,12 @@ private const string INDENT = '  ';
      *
      * @return string The validated and converted font data key, or an empty string if invalid.
      *
-     * @throws InvalidArgumentException If the key is invalid and the error mode is set to throw exceptions.
+     * @throws Throwable If the key is invalid and the error mode is set to throw exceptions.
      *
      * @since PHP 8.0
      * @author af
      */
-    private static function validateFontKey(string $fontDataKey, int $errorMode): string
+    public static function validateFontKey(string $fontDataKey, int $errorMode): string
     {
         switch ($errorMode) {
             case ErrorTools::ERROR_MODE_IGNORE:
